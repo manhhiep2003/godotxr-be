@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\GodotXR.Domain\GodotXR.Domain.csproj" />
+  </ItemGroup>
+
 </Project>
