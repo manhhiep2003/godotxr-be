@@ -3,8 +3,8 @@
     public enum UserRole
     {
         Admin,
-        Lecture,
-        Parent
+        Teacher,   
+        Parent,
+        Child    
     }
 }
-
