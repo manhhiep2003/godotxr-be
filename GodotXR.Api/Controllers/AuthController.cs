@@ -35,10 +35,28 @@ namespace GodotXR.Api.Controllers
 
             if (result == null)
             {
-                return Unauthorized(ApiResponse<TokenModel>.FailureResponse("Invalid username or password."));
+                return Unauthorized(ApiResponse<TokenModel>.FailureResponse("Invalid email or password."));
             }
 
             return Ok(ApiResponse<TokenModel>.SuccessResponse(result, "Login successful"));
+        }
+
+        [HttpPost("refresh-token")]
+        public async Task<ActionResult<ApiResponse<TokenModel>>> RefreshToken([FromBody] RefreshTokenRequest request)
+        {
+            if (request is null)
+            {
+                return BadRequest(ApiResponse<TokenModel>.FailureResponse("Invalid client request"));
+            }
+
+            var result = await _authService.RefreshToken(request);
+
+            if (result == null)
+            {
+                return BadRequest(ApiResponse<TokenModel>.FailureResponse("Invalid token or refresh token"));
+            }
+
+            return Ok(ApiResponse<TokenModel>.SuccessResponse(result, "Token refreshed successfully"));
         }
     }
 }

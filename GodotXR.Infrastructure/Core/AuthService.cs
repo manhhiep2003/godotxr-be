@@ -25,7 +25,7 @@ namespace GodotXR.Infrastructure.Core
         public async Task<TokenModel?> Login(LoginRequest request)
         {
             var user = await _unitOfWork.UserRepository.GetFirstOrDefaultAsync(
-                u => u.Username == request.Username,
+                u => u.Email == request.Email,
                 includeProperties: "Role");
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
@@ -35,7 +35,6 @@ namespace GodotXR.Infrastructure.Core
 
             var accessToken = _tokenService.GenerateAccessToken(user);
             var refreshToken = _tokenService.GenerateRefreshToken();
-
 
             var cacheKey = $"refreshToken:{user.Email}";
             await _cache.SetStringAsync(cacheKey, refreshToken, new DistributedCacheEntryOptions
@@ -59,6 +58,41 @@ namespace GodotXR.Infrastructure.Core
                     RoleName = user.Role.RoleName.ToString(),
                     IsActive = user.IsActive
                 }
+            };
+        }
+
+        public async Task<TokenModel?> RefreshToken(RefreshTokenRequest request)
+        {
+            var principal = _tokenService.GetPrincipalFromExpiredToken(request.AccessToken);
+            if (principal == null) return null;
+
+            var email = principal.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
+            if (string.IsNullOrEmpty(email)) return null;
+
+            var user = await _unitOfWork.UserRepository.GetFirstOrDefaultAsync(
+                u => u.Email == email,
+                includeProperties: "Role");
+
+            var cacheKey = $"refreshToken:{email}";
+            var savedRefreshToken = await _cache.GetStringAsync(cacheKey);
+
+            if (user == null || savedRefreshToken != request.RefreshToken)
+                return null;
+
+            var newAccessToken = _tokenService.GenerateAccessToken(user);
+            var newRefreshToken = _tokenService.GenerateRefreshToken();
+
+            await _cache.SetStringAsync(cacheKey, newRefreshToken, new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(7)
+            });
+
+            await _unitOfWork.SaveChangesAsync();
+
+            return new TokenModel
+            {
+                AccessToken = newAccessToken,
+                RefreshToken = newRefreshToken
             };
         }
     }
