@@ -4,7 +4,7 @@ using GodotXR.Application.Services;
 using GodotXR.Domain.Entities;
 using GodotXR.Domain.IUnitOfWork;
 
-namespace GodotXR.Infrastructure.Core
+namespace GodotXR.Application.Services
 {
     public class UserService : IUserService
     {
