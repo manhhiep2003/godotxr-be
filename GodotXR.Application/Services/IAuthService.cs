@@ -6,5 +6,7 @@ namespace GodotXR.Application.Services
     public interface IAuthService
     {
         Task<TokenModel?> Login(LoginRequest request);
+
+        Task<TokenModel?> RefreshToken(RefreshTokenRequest request);
     }
 }

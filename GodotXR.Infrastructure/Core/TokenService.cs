@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using GodotXR.Application.Services;
 using GodotXR.Domain.Entities;
 using Microsoft.Extensions.Configuration;
