@@ -31,7 +31,7 @@ namespace GodotXR.Infrastructure
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserService, UserService>();
-
+            services.AddScoped<IRoleService, RoleService>();
             // AutoMapper
             services.AddAutoMapper(cfg =>
             {

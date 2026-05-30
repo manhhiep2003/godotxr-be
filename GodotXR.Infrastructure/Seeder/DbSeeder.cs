@@ -9,10 +9,11 @@ namespace GodotXR.Infrastructure.Data
         public static void Seed(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Role>().HasData(
-                new Role { Id = 1, RoleName = UserRole.Admin, Description = "System Administrator", IsActive = true },
-                new Role { Id = 2, RoleName = UserRole.Lecture, Description = "Lecture", IsActive = true },
-                new Role { Id = 3, RoleName = UserRole.Parent, Description = "Parent", IsActive = true }
-            );
+      new Role { Id = 1, RoleName = UserRole.Admin, Description = "System Administrator", IsActive = true },
+      new Role { Id = 2, RoleName = UserRole.Teacher, Description = "Teacher", IsActive = true },
+      new Role { Id = 3, RoleName = UserRole.Parent, Description = "Parent", IsActive = true },
+      new Role { Id = 4, RoleName = UserRole.Child, Description = "Child", IsActive = true }
+  );
 
             modelBuilder.Entity<User>().HasData(
                 new User
@@ -30,10 +31,10 @@ namespace GodotXR.Infrastructure.Data
                 new User
                 {
                     Id = 2,
-                    Username = "lecture",
+                    Username = "teacher",
                     PasswordHash = "$2a$12$fm/KNqTHvTPZ.Xp17lMgpO7C5oJzF9lUi9niXMOX5mriX6xG9VPdu",
                     FullName = "Doan Manh Hiep",
-                    Email = "lecture@godotxr.com",
+                    Email = "teacher@godotxr.com",
                     Phone = "0987654321",
                     RoleId = 2,
                     IsActive = true,
