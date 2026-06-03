@@ -21,6 +21,17 @@ namespace GodotXR.Infrastructure.Configurations
                .WithMany(r => r.Users)
                .HasForeignKey(u => u.RoleId)
                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Program>()
+             .HasMany(p => p.Lessons)
+             .WithOne(l => l.Program)
+             .HasForeignKey(l => l.ProgramId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Program>()
+                .HasQueryFilter(p => !p.IsDeleted);
+
+            modelBuilder.Entity<Lesson>()
+                .HasQueryFilter(l => !l.IsDeleted);
         }
     }
 }
