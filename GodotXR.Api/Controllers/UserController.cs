@@ -18,12 +18,14 @@ namespace GodotXR.Api.Controllers
         {
             _userService = userService;
         }
+
         [HttpGet]
         public async Task<ActionResult<ApiResponse<IEnumerable<UserResponse>>>> GetAll()
         {
             var users = await _userService.GetAllAsync();
             return Ok(ApiResponse<IEnumerable<UserResponse>>.SuccessResponse(users));
         }
+
         [HttpGet("{id:int}")]
         public async Task<ActionResult<ApiResponse<UserResponse>>> GetById(int id)
         {
@@ -33,6 +35,7 @@ namespace GodotXR.Api.Controllers
 
             return Ok(ApiResponse<UserResponse>.SuccessResponse(user));
         }
+
         [HttpPost]
         public async Task<ActionResult<ApiResponse<UserResponse>>> Create([FromBody] CreateUserRequest request)
         {
@@ -57,6 +60,7 @@ namespace GodotXR.Api.Controllers
                 return BadRequest(ApiResponse<UserResponse>.FailureResponse(ex.Message));
             }
         }
+
         [HttpPut("{id:int}")]
         public async Task<ActionResult<ApiResponse<UserResponse>>> Update(
             int id, [FromBody] UpdateUserRequest request)
@@ -81,6 +85,7 @@ namespace GodotXR.Api.Controllers
                 return BadRequest(ApiResponse<UserResponse>.FailureResponse(ex.Message));
             }
         }
+
         [HttpDelete("{id:int}")]
         public async Task<ActionResult<ApiResponse>> Delete(int id)
         {

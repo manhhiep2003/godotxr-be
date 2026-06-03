@@ -1,6 +1,5 @@
 ﻿using GodotXR.Application.DTOs.Request.User;
 using GodotXR.Application.DTOs.Response.User;
-using GodotXR.Application.Services;
 using GodotXR.Domain.Entities;
 using GodotXR.Domain.IUnitOfWork;
 
@@ -92,7 +91,7 @@ namespace GodotXR.Application.Services
 
             if (request.RoleName.HasValue)
             {
-                var role = await _unitOfWork.Repository<Role>().GetFirstOrDefaultAsync(
+                var role = await _unitOfWork.RoleRepository.GetFirstOrDefaultAsync(
                     r => r.RoleName == request.RoleName.Value && r.IsActive);
                 if (role == null)
                     throw new InvalidOperationException($"Role '{request.RoleName}' không tồn tại hoặc không hoạt động.");
@@ -111,9 +110,11 @@ namespace GodotXR.Application.Services
         {
             var user = await _unitOfWork.UserRepository.GetFirstOrDefaultAsync(
                 u => u.Id == id && !u.IsDeleted);
+
             if (user == null) return false;
             user.IsDeleted = true;
             user.UpdatedAt = DateTime.UtcNow;
+            user.DeletedAt = DateTime.UtcNow;
             _unitOfWork.UserRepository.Update(user);
             await _unitOfWork.SaveChangesAsync();
 

@@ -16,7 +16,7 @@ namespace GodotXR.Application.Services
 
         public async Task<IEnumerable<RoleResponse>> GetAllAsync()
         {
-            var roles = await _unitOfWork.Repository<Role>().FindAsync(
+            var roles = await _unitOfWork.RoleRepository.FindAsync(
                 filter: r => !r.IsDeleted,
                 tracked: false);
 
@@ -25,7 +25,7 @@ namespace GodotXR.Application.Services
 
         public async Task<RoleResponse?> GetByIdAsync(int id)
         {
-            var role = await _unitOfWork.Repository<Role>().GetFirstOrDefaultAsync(
+            var role = await _unitOfWork.RoleRepository.GetFirstOrDefaultAsync(
                 filter: r => r.Id == id && !r.IsDeleted,
                 tracked: false);
 
@@ -34,7 +34,7 @@ namespace GodotXR.Application.Services
 
         public async Task<RoleResponse> CreateAsync(CreateRoleRequest request)
         {
-            var exists = await _unitOfWork.Repository<Role>().ExistsAsync(
+            var exists = await _unitOfWork.RoleRepository.ExistsAsync(
                 r => r.RoleName == request.RoleName && !r.IsDeleted);
             if (exists)
                 throw new InvalidOperationException($"Role '{request.RoleName}' đã tồn tại.");
@@ -46,7 +46,7 @@ namespace GodotXR.Application.Services
                 IsActive = true
             };
 
-            await _unitOfWork.Repository<Role>().AddAsync(role);
+            await _unitOfWork.RoleRepository.AddAsync(role);
             await _unitOfWork.SaveChangesAsync();
 
             return MapToResponse(role);
@@ -54,14 +54,14 @@ namespace GodotXR.Application.Services
 
         public async Task<RoleResponse?> UpdateAsync(int id, UpdateRoleRequest request)
         {
-            var role = await _unitOfWork.Repository<Role>().GetFirstOrDefaultAsync(
+            var role = await _unitOfWork.RoleRepository.GetFirstOrDefaultAsync(
                 filter: r => r.Id == id && !r.IsDeleted);
 
             if (role == null) return null;
 
             if (request.RoleName.HasValue && request.RoleName.Value != role.RoleName)
             {
-                var exists = await _unitOfWork.Repository<Role>().ExistsAsync(
+                var exists = await _unitOfWork.RoleRepository.ExistsAsync(
                     r => r.RoleName == request.RoleName.Value && r.Id != id && !r.IsDeleted);
                 if (exists)
                     throw new InvalidOperationException($"Role '{request.RoleName}' đã tồn tại.");
@@ -73,7 +73,7 @@ namespace GodotXR.Application.Services
             if (request.IsActive.HasValue) role.IsActive = request.IsActive.Value;
 
             role.UpdatedAt = DateTime.UtcNow;
-            _unitOfWork.Repository<Role>().Update(role);
+            _unitOfWork.RoleRepository.Update(role);
             await _unitOfWork.SaveChangesAsync();
 
             return MapToResponse(role);
@@ -81,13 +81,14 @@ namespace GodotXR.Application.Services
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var role = await _unitOfWork.Repository<Role>().GetFirstOrDefaultAsync(
+            var role = await _unitOfWork.RoleRepository.GetFirstOrDefaultAsync(
                 r => r.Id == id && !r.IsDeleted);
             if (role == null) return false;
 
             role.IsDeleted = true;
             role.UpdatedAt = DateTime.UtcNow;
-            _unitOfWork.Repository<Role>().Update(role);
+            role.DeletedAt = DateTime.UtcNow;
+            _unitOfWork.RoleRepository.Update(role);
             await _unitOfWork.SaveChangesAsync();
 
             return true;

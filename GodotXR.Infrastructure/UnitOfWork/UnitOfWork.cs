@@ -13,6 +13,7 @@ namespace GodotXR.Infrastructure.UnitOfWork
         private readonly Dictionary<Type, object> _repositories = new();
 
         private IUserRepository? _userRepository;
+        private IRoleRepository? _roleRepository;
 
         public UnitOfWork(AppDbContext context)
         {
@@ -25,6 +26,15 @@ namespace GodotXR.Infrastructure.UnitOfWork
             {
                 _userRepository ??= new UserRepository(_context);
                 return _userRepository;
+            }
+        }
+
+        public IRoleRepository RoleRepository
+        {
+            get
+            {
+                _roleRepository ??= new RoleRepository(_context);
+                return _roleRepository;
             }
         }
 
