@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using GodotXR.Application.DTOs.Response.Lesson;
 using GodotXR.Application.DTOs.Response.Program;
 using GodotXR.Domain.Entities;
 using System.Security.Claims;
@@ -20,6 +21,7 @@ namespace GodotXR.Infrastructure.Mappings
                 .ForMember(dest => dest.Lessons, opt => opt.MapFrom(src =>
                     src.Lessons.Where(l => !l.IsDeleted).ToList()));
             CreateMap<Lesson, LessonSummaryResponse>();
+            CreateMap<Lesson, LessonResponse>();
         }
     }
 }

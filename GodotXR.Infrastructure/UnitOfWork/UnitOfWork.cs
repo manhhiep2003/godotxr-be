@@ -11,9 +11,9 @@ namespace GodotXR.Infrastructure.UnitOfWork
         private readonly AppDbContext _context;
         private IDbContextTransaction? _transaction;
         private readonly Dictionary<Type, object> _repositories = new();
-
         private IUserRepository? _userRepository;
         private IRoleRepository? _roleRepository;
+        private ILessonRepository? _lessonRepository;
 
         public UnitOfWork(AppDbContext context)
         {
@@ -38,16 +38,23 @@ namespace GodotXR.Infrastructure.UnitOfWork
             }
         }
 
+        public ILessonRepository LessonRepository
+        {
+            get
+            {
+                _lessonRepository ??= new LessonRepository(_context);
+                return _lessonRepository;
+            }
+        }
+
         public IGenericRepository<T> Repository<T>() where T : class
         {
             var type = typeof(T);
-
             if (!_repositories.TryGetValue(type, out var repository))
             {
                 repository = new GenericRepository<T>(_context);
                 _repositories[type] = repository;
             }
-
             return (IGenericRepository<T>)repository;
         }
 
@@ -65,10 +72,7 @@ namespace GodotXR.Infrastructure.UnitOfWork
         {
             try
             {
-                // Note: We keep SaveChangesAsync here to ensure data is persisted before commit, 
-                // but developers must be careful not to call uow.SaveChangesAsync() right before this.
                 await _context.SaveChangesAsync();
-
                 if (_transaction != null)
                     await _transaction.CommitAsync();
             }
@@ -99,8 +103,6 @@ namespace GodotXR.Infrastructure.UnitOfWork
 
         public void Dispose()
         {
-            // Do NOT dispose _context manually here if it's managed by DI (Scoped).
-            // Only dispose the transaction if it exists.
             _transaction?.Dispose();
             GC.SuppressFinalize(this);
         }
