@@ -11,7 +11,7 @@ namespace GodotXR.Infrastructure.UnitOfWork
         private readonly AppDbContext _context;
         private IDbContextTransaction? _transaction;
         private readonly Dictionary<Type, object> _repositories = new();
-
+        private ILessonRepository? _lessonRepository;
         private IUserRepository? _userRepository;
 
         public UnitOfWork(AppDbContext context)
@@ -27,7 +27,14 @@ namespace GodotXR.Infrastructure.UnitOfWork
                 return _userRepository;
             }
         }
-
+        public ILessonRepository LessonRepository
+        {
+            get
+            {
+                _lessonRepository ??= new LessonRepository(_context);
+                return _lessonRepository;
+            }
+        }
         public IGenericRepository<T> Repository<T>() where T : class
         {
             var type = typeof(T);
