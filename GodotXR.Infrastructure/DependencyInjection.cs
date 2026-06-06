@@ -1,14 +1,16 @@
 ﻿using GodotXR.Application.Services;
 using GodotXR.Domain.IRepositories;
 using GodotXR.Domain.IUnitOfWork;
+using GodotXR.Infrastructure.Configurations;
 using GodotXR.Infrastructure.Core;
 using GodotXR.Infrastructure.Data;
 using GodotXR.Infrastructure.Mappings;
 using GodotXR.Infrastructure.Repositories;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Minio;
 using System.Text;
 
 namespace GodotXR.Infrastructure
@@ -19,11 +21,33 @@ namespace GodotXR.Infrastructure
         {
             DbFactory.RegisterContext(services, configuration);
 
+            // Cache
             services.AddStackExchangeRedisCache(options =>
             {
                 options.Configuration = configuration.GetConnectionString("Redis");
                 options.InstanceName = "GodotXR_";
             });
+
+            // Object Storage
+            services.Configure<StorageOptions>(
+             configuration.GetSection(StorageOptions.SectionName));
+
+            var options =
+                configuration
+                    .GetSection(StorageOptions.SectionName)
+                    .Get<StorageOptions>()!;
+
+            services.AddSingleton<IMinioClient>(_ =>
+            {
+                return new MinioClient()
+                    .WithEndpoint(options.Endpoint)
+                    .WithCredentials(
+                        options.AccessKey,
+                        options.SecretKey)
+                    .Build();
+            });
+
+            services.AddScoped<IStorageService, MinIOService>();
 
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             services.AddScoped<IUnitOfWork, UnitOfWork.UnitOfWork>();
