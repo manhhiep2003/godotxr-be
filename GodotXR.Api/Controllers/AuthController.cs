@@ -1,6 +1,7 @@
-﻿using GodotXR.Application.DTOs.Response.Auth;
-using GodotXR.Application.DTOs.Request.Auth;
+﻿using GodotXR.Application.DTOs.Request.Auth;
 using GodotXR.Application.DTOs.Response;
+using GodotXR.Application.DTOs.Response.Auth;
+using GodotXR.Application.DTOs.Response.User;
 using GodotXR.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,40 +24,80 @@ namespace GodotXR.Api.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<ApiResponse<TokenModel>>> Login([FromBody] LoginRequest request)
+        [ProducesResponseType(typeof(ApiResponse<TokenModel>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<TokenModel>), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult> Login(
+            [FromBody] LoginRequest request)
         {
             if (!ModelState.IsValid)
             {
-                var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
-                return BadRequest(ApiResponse<TokenModel>.FailureResponse("Validation failed", errors));
+                var validErrors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+
+                return BadRequest(new ApiResponse<TokenModel>
+                {
+                    Success = false,
+                    Message = "Validation failed.",
+                    Errors = validErrors
+                });
             }
 
-            var result = await _authService.Login(request);
+            var (ok, errors, data) = await _authService.LoginAsync(request);
 
-            if (result == null)
+            if (!ok || data == null)
             {
-                return Unauthorized(ApiResponse<TokenModel>.FailureResponse("Invalid email or password."));
+                return Unauthorized(new ApiResponse<TokenModel>
+                {
+                    Success = false,
+                    Message = "Login failed.",
+                    Errors = errors.ToList()
+                });
             }
 
-            return Ok(ApiResponse<TokenModel>.SuccessResponse(result, "Login successful"));
+            return Ok(new ApiResponse<TokenModel>
+            {
+                Success = true,
+                Message = "Login successful.",
+                Data = data
+            });
         }
 
         [HttpPost("refresh-token")]
-        public async Task<ActionResult<ApiResponse<TokenModel>>> RefreshToken([FromBody] RefreshTokenRequest request)
+        [ProducesResponseType(typeof(ApiResponse<TokenModel>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<TokenModel>), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult> RefreshToken(
+            [FromBody] RefreshTokenRequest request)
         {
-            if (request is null)
+            if (request == null)
             {
-                return BadRequest(ApiResponse<TokenModel>.FailureResponse("Invalid client request"));
+                return BadRequest(new ApiResponse<TokenModel>
+                {
+                    Success = false,
+                    Message = "Invalid request."
+                });
             }
 
-            var result = await _authService.RefreshToken(request);
+            var (ok, errors, data)
+                = await _authService.RefreshTokenAsync(request);
 
-            if (result == null)
+            if (!ok || data == null)
             {
-                return BadRequest(ApiResponse<TokenModel>.FailureResponse("Invalid token or refresh token"));
+                return BadRequest(new ApiResponse<TokenModel>
+                {
+                    Success = false,
+                    Message = "Refresh token failed.",
+                    Errors = errors.ToList()
+                });
             }
 
-            return Ok(ApiResponse<TokenModel>.SuccessResponse(result, "Token refreshed successfully"));
+            return Ok(new ApiResponse<TokenModel>
+            {
+                Success = true,
+                Message = "Token refreshed successfully.",
+                Data = data
+            });
         }
     }
 }

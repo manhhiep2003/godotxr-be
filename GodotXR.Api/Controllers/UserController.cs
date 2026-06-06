@@ -1,15 +1,14 @@
-﻿using GodotXR.Application.DTOs.Request.User;
+﻿using GodotXR.Api.Contracts;
+using GodotXR.Application.DTOs.Request.User;
 using GodotXR.Application.DTOs.Response;
 using GodotXR.Application.DTOs.Response.User;
 using GodotXR.Application.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GodotXR.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -20,80 +19,189 @@ namespace GodotXR.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<ApiResponse<IEnumerable<UserResponse>>>> GetAll()
+        [ProducesResponseType(typeof(ApiResponse<PagedResponse<UserResponse>>), StatusCodes.Status200OK)]
+        public async Task<ActionResult> Get([FromQuery] PaginationQuery query)
         {
-            var users = await _userService.GetAllAsync();
-            return Ok(ApiResponse<IEnumerable<UserResponse>>.SuccessResponse(users));
+            var data = await _userService.GetListUserAsync(
+                query.PageNumber,
+                query.PageSize);
+
+            return Ok(new ApiResponse<PagedResponse<UserResponse>>
+            {
+                Success = true,
+                Message = "OK",
+                Data = data,
+            });
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<ApiResponse<UserResponse>>> GetById(int id)
+        [ProducesResponseType(typeof(ApiResponse<UserResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<UserResponse>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<UserResponse>), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> GetById(int id)
         {
-            var user = await _userService.GetByIdAsync(id);
-            if (user == null)
-                return NotFound(ApiResponse<UserResponse>.FailureResponse($"Không tìm thấy user với id = {id}."));
+            if (id <= 0)
+            {
+                return BadRequest(new ApiResponse<UserResponse>
+                {
+                    Success = false,
+                    Message = "Invalid user id."
+                });
+            }
 
-            return Ok(ApiResponse<UserResponse>.SuccessResponse(user));
+            var data = await _userService.GetUserByIdAsync(id);
+
+            if (data is null)
+            {
+                return NotFound(new ApiResponse<UserResponse>
+                {
+                    Success = false,
+                    Message = "User not found.",
+                });
+            }
+
+            return Ok(new ApiResponse<UserResponse>
+            {
+                Success = true,
+                Message = "OK",
+                Data = data,
+            });
         }
 
         [HttpPost]
-        public async Task<ActionResult<ApiResponse<UserResponse>>> Create([FromBody] CreateUserRequest request)
+        [ProducesResponseType(typeof(ApiResponse<UserResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<UserResponse>), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult> Create([FromBody] CreateUserRequest request)
         {
-            if (!ModelState.IsValid)
+            if (request is null)
             {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
-                    .ToList();
-                return BadRequest(ApiResponse<UserResponse>.FailureResponse("Validation failed", errors));
+                return BadRequest(new ApiResponse<UserResponse>
+                {
+                    Success = false,
+                    Message = "Create user failed.",
+                    Errors = new List<string> { "Request body is required." },
+                });
             }
 
-            try
+            var (ok, errors, data) = await _userService.CreateUserAsync(request);
+
+            if (!ok || data is null)
             {
-                var created = await _userService.CreateAsync(request);
-                return CreatedAtAction(
-                    nameof(GetById),
-                    new { id = created.Id },
-                    ApiResponse<UserResponse>.SuccessResponse(created, "Tạo user thành công"));
+                return BadRequest(new ApiResponse<UserResponse>
+                {
+                    Success = false,
+                    Message = "Create user failed.",
+                    Errors = errors.ToList(),
+                });
             }
-            catch (InvalidOperationException ex)
+
+            return Ok(new ApiResponse<UserResponse>
             {
-                return BadRequest(ApiResponse<UserResponse>.FailureResponse(ex.Message));
-            }
+                Success = true,
+                Message = "User created.",
+                Data = data,
+            });
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult<ApiResponse<UserResponse>>> Update(
+        [ProducesResponseType(typeof(ApiResponse<UserResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<UserResponse>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<UserResponse>), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> Update(
             int id, [FromBody] UpdateUserRequest request)
         {
-            if (!ModelState.IsValid)
+            if (id <= 0)
             {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
-                    .ToList();
-                return BadRequest(ApiResponse<UserResponse>.FailureResponse("Validation failed", errors));
+                return BadRequest(new ApiResponse<UserResponse>
+                {
+                    Success = false,
+                    Message = "Invalid user id."
+                });
             }
-            try
-            {
-                var updated = await _userService.UpdateAsync(id, request);
-                if (updated == null)
-                    return NotFound(ApiResponse<UserResponse>.FailureResponse($"Không tìm thấy user với id = {id}."));
 
-                return Ok(ApiResponse<UserResponse>.SuccessResponse(updated, "Cập nhật user thành công"));
-            }
-            catch (InvalidOperationException ex)
+            if (request is null)
             {
-                return BadRequest(ApiResponse<UserResponse>.FailureResponse(ex.Message));
+                return BadRequest(new ApiResponse<UserResponse>
+                {
+                    Success = false,
+                    Message = "Create user failed.",
+                    Errors = new List<string> { "Request body is required." },
+                });
             }
+
+            var (ok, notFound, errors, data) = await _userService.UpdateUserAsync(id, request);
+
+            if (notFound)
+            {
+                return NotFound(new ApiResponse<UserResponse>
+                {
+                    Success = false,
+                    Message = "User not found.",
+                });
+            }
+
+            if (!ok || data is null)
+            {
+                return BadRequest(new ApiResponse<UserResponse>
+                {
+                    Success = false,
+                    Message = "Update user failed.",
+                    Errors = errors.ToList(),
+                });
+            }
+
+            return Ok(new ApiResponse<UserResponse>
+            {
+                Success = true,
+                Message = "User updated.",
+                Data = data,
+            });
         }
 
         [HttpDelete("{id:int}")]
-        public async Task<ActionResult<ApiResponse>> Delete(int id)
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> Delete(int id)
         {
-            var result = await _userService.DeleteAsync(id);
-            if (!result)
-                return NotFound(ApiResponse.FailureResponse($"Không tìm thấy user với id = {id}."));
+            if (id <= 0)
+            {
+                return BadRequest(new ApiResponse<UserResponse>
+                {
+                    Success = false,
+                    Message = "Invalid user id."
+                });
+            }
 
-            return Ok(ApiResponse.SuccessResponse("Xóa user thành công"));
+            var (ok, notFound, errors) = await _userService.DeleteUserAsync(id);
+
+            if (notFound)
+            {
+                return NotFound(new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "User not found.",
+                    Data = false,
+                });
+            }
+
+            if (!ok)
+            {
+                return BadRequest(new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "Delete user failed.",
+                    Errors = errors.ToList(),
+                    Data = false,
+                });
+            }
+
+            return Ok(new ApiResponse<bool>
+            {
+                Success = true,
+                Message = "User deleted.",
+                Data = true,
+            });
         }
     }
 }

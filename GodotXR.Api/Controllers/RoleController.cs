@@ -1,15 +1,15 @@
-﻿using GodotXR.Application.DTOs.Request.Role;
+﻿using GodotXR.Api.Contracts;
+using GodotXR.Application.DTOs.Request.Role;
 using GodotXR.Application.DTOs.Response;
 using GodotXR.Application.DTOs.Response.Role;
+using GodotXR.Application.DTOs.Response.User;
 using GodotXR.Application.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GodotXR.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
     public class RoleController : ControllerBase
     {
         private readonly IRoleService _roleService;
@@ -20,74 +20,169 @@ namespace GodotXR.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<ApiResponse<IEnumerable<RoleResponse>>>> GetAll()
+        [ProducesResponseType(typeof(ApiResponse<PagedResponse<RoleResponse>>), StatusCodes.Status200OK)]
+        public async Task<ActionResult> Get([FromQuery] PaginationQuery query)
         {
-            var roles = await _roleService.GetAllAsync();
-            return Ok(ApiResponse<IEnumerable<RoleResponse>>.SuccessResponse(roles));
+            var data = await _roleService.GetListRoleAsync(
+                query.PageNumber,
+                query.PageSize);
+
+            return Ok(new ApiResponse<PagedResponse<RoleResponse>>
+            {
+                Success = true,
+                Message = "OK",
+                Data = data,
+            });
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<ApiResponse<RoleResponse>>> GetById(int id)
+        [ProducesResponseType(typeof(ApiResponse<RoleResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<RoleResponse>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<RoleResponse>), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> GetById(int id)
         {
-            var role = await _roleService.GetByIdAsync(id);
-            if (role == null)
-                return NotFound(ApiResponse<RoleResponse>.FailureResponse($"Không tìm thấy role với id = {id}."));
-            return Ok(ApiResponse<RoleResponse>.SuccessResponse(role));
+            if (id <= 0)
+            {
+                return BadRequest(new ApiResponse<RoleResponse>
+                {
+                    Success = false,
+                    Message = "Invalid role id."
+                });
+            }
+
+            var data = await _roleService.GetRoleByIdAsync(id);
+
+            if (data == null)
+            {
+                return NotFound(new ApiResponse<RoleResponse>
+                {
+                    Success = false,
+                    Message = "Role not found."
+                });
+            }
+
+            return Ok(new ApiResponse<RoleResponse>
+            {
+                Success = true,
+                Message = "OK",
+                Data = data
+            });
         }
 
         [HttpPost]
+        [ProducesResponseType(typeof(ApiResponse<RoleResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<RoleResponse>), StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<ApiResponse<RoleResponse>>> Create([FromBody] CreateRoleRequest request)
         {
-            if (!ModelState.IsValid)
+            var (ok, errors, data) = await _roleService.CreateRoleAsync(request);
+
+            if (!ok || data == null)
             {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
-                    .ToList();
-                return BadRequest(ApiResponse<RoleResponse>.FailureResponse("Validation failed", errors));
+                return BadRequest(new ApiResponse<RoleResponse>
+                {
+                    Success = false,
+                    Message = "Create role failed.",
+                    Errors = errors.ToList()
+                });
             }
-            try
+
+            return Ok(new ApiResponse<RoleResponse>
             {
-                var created = await _roleService.CreateAsync(request);
-                return CreatedAtAction(nameof(GetById), new { id = created.Id },
-                    ApiResponse<RoleResponse>.SuccessResponse(created, "Tạo role thành công"));
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ApiResponse<RoleResponse>.FailureResponse(ex.Message));
-            }
+                Success = true,
+                Message = "Role created.",
+                Data = data
+            });
         }
 
         [HttpPut("{id:int}")]
+        [ProducesResponseType(typeof(ApiResponse<RoleResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<RoleResponse>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<RoleResponse>), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ApiResponse<RoleResponse>>> Update(
             int id, [FromBody] UpdateRoleRequest request)
         {
-            if (!ModelState.IsValid)
+            if (id <= 0)
             {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
-                    .ToList();
-                return BadRequest(ApiResponse<RoleResponse>.FailureResponse("Validation failed", errors));
+                return BadRequest(new ApiResponse<UserResponse>
+                {
+                    Success = false,
+                    Message = "Invalid role id."
+                });
             }
-            try
+
+            var (ok, notFound, errors, data) = await _roleService.UpdateRoleAsync(id, request);
+
+            if (notFound)
             {
-                var updated = await _roleService.UpdateAsync(id, request);
-                if (updated == null)
-                    return NotFound(ApiResponse<RoleResponse>.FailureResponse($"Không tìm thấy role với id = {id}."));
-                return Ok(ApiResponse<RoleResponse>.SuccessResponse(updated, "Cập nhật role thành công"));
+                return NotFound(new ApiResponse<RoleResponse>
+                {
+                    Success = false,
+                    Message = "Role not found."
+                });
             }
-            catch (InvalidOperationException ex)
+
+            if (!ok || data == null)
             {
-                return BadRequest(ApiResponse<RoleResponse>.FailureResponse(ex.Message));
+                return BadRequest(new ApiResponse<RoleResponse>
+                {
+                    Success = false,
+                    Message = "Update role failed.",
+                    Errors = errors.ToList()
+                });
             }
+
+            return Ok(new ApiResponse<RoleResponse>
+            {
+                Success = true,
+                Message = "Role updated.",
+                Data = data
+            });
         }
 
         [HttpDelete("{id:int}")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ApiResponse>> Delete(int id)
         {
-            var result = await _roleService.DeleteAsync(id);
-            if (!result)
-                return NotFound(ApiResponse.FailureResponse($"Không tìm thấy role với id = {id}."));
-            return Ok(ApiResponse.SuccessResponse("Xóa role thành công"));
+            if (id <= 0)
+            {
+                return BadRequest(new ApiResponse<UserResponse>
+                {
+                    Success = false,
+                    Message = "Invalid role id."
+                });
+            }
+
+            var (ok, notFound, errors) = await _roleService.DeleteRoleAsync(id);
+
+            if (notFound)
+            {
+                return NotFound(new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "Role not found.",
+                    Data = false
+                });
+            }
+
+            if (!ok)
+            {
+                return BadRequest(new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "Delete role failed.",
+                    Errors = errors.ToList(),
+                    Data = false
+                });
+            }
+
+            return Ok(new ApiResponse<bool>
+            {
+                Success = true,
+                Message = "Role deleted.",
+                Data = true
+            });
         }
     }
 }

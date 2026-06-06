@@ -1,19 +1,16 @@
 ﻿using GodotXR.Application.DTOs.Request.User;
+using GodotXR.Application.DTOs.Response;
 using GodotXR.Application.DTOs.Response.User;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GodotXR.Application.Services
 {
     public interface IUserService
     {
-        Task<IEnumerable<UserResponse>> GetAllAsync();
-        Task<UserResponse?> GetByIdAsync(int id);
-        Task<UserResponse> CreateAsync(CreateUserRequest request);
-        Task<UserResponse?> UpdateAsync(int id, UpdateUserRequest request);
-        Task<bool> DeleteAsync(int id);
+        Task<PagedResponse<UserResponse>> GetListUserAsync(int pageNumber, int pageSize);
+        Task<UserResponse?> GetUserByIdAsync(int id);
+        Task<(bool Succeeded, IEnumerable<string> Errors, UserResponse? Data)> CreateUserAsync(CreateUserRequest request);
+        Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors, UserResponse? Data)> UpdateUserAsync(int id, UpdateUserRequest request);
+
+        Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors)> DeleteUserAsync(int id);
     }
 }

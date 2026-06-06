@@ -6,10 +6,17 @@ namespace GodotXR.Application.Services
 {
     public interface IProgramService
     {
-        Task<ApiResponse<IEnumerable<ProgramResponse>>> GetAllAsync();
-        Task<ApiResponse<ProgramResponse>> GetByIdAsync(int id);
-        Task<ApiResponse<ProgramResponse>> CreateAsync(CreateProgramRequest request);
-        Task<ApiResponse<ProgramResponse>> UpdateAsync(int id, UpdateProgramRequest request);
-        Task<ApiResponse<bool>> DeleteAsync(int id);
+        Task<PagedResponse<ProgramResponse>> GetListProgramAsync(int pageNumber, int pageSize);
+
+        Task<ProgramResponse?> GetProgramByIdAsync(int id);
+
+        Task<(bool Succeeded, IEnumerable<string> Errors, ProgramResponse? Data)>
+            CreateProgramAsync(CreateProgramRequest request);
+
+        Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors, ProgramResponse? Data)>
+            UpdateProgramAsync(int id, UpdateProgramRequest request);
+
+        Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors)>
+            DeleteProgramAsync(int id);
     }
 }

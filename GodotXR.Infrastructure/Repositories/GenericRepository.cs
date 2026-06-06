@@ -1,12 +1,8 @@
 ﻿using GodotXR.Domain.IRepositories;
+using GodotXR.Domain.Shared;
 using GodotXR.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GodotXR.Infrastructure.Repositories
 {
@@ -29,6 +25,56 @@ namespace GodotXR.Infrastructure.Repositories
         public async Task<IEnumerable<T>> GetAllAsync()
         {
             return await dbSet.ToListAsync();
+        }
+
+        public async Task<PagedResult<T>> GetPagedAsync(
+        int pageNumber,
+        int pageSize,
+        Expression<Func<T, bool>>? predicate = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
+        bool asNoTracking = true,
+        CancellationToken cancellationToken = default)
+        {
+            var normalizedPageNumber = pageNumber < 1 ? 1 : pageNumber;
+            var normalizedPageSize = pageSize < 1 ? 10 : pageSize;
+            normalizedPageSize = normalizedPageSize > 100 ? 100 : normalizedPageSize;
+
+            IQueryable<T> query = dbSet;
+
+            if (asNoTracking)
+            {
+                query = query.AsNoTracking();
+            }
+
+            if (predicate is not null)
+            {
+                query = query.Where(predicate);
+            }
+
+            var totalCount = await query.CountAsync(cancellationToken);
+
+            if (orderBy is not null)
+            {
+                query = orderBy(query);
+            }
+
+            var items = await query
+                .Skip((normalizedPageNumber - 1) * normalizedPageSize)
+                .Take(normalizedPageSize)
+                .ToListAsync(cancellationToken);
+
+            var totalPages = totalCount == 0
+                ? 0
+                : (int)Math.Ceiling(totalCount / (double)normalizedPageSize);
+
+            return new PagedResult<T>
+            {
+                PageNumber = normalizedPageNumber,
+                PageSize = normalizedPageSize,
+                TotalCount = totalCount,
+                TotalPages = totalPages,
+                Items = items,
+            };
         }
 
         public async Task<IEnumerable<T>> FindAsync(

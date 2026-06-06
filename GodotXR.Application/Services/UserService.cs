@@ -1,4 +1,5 @@
 ﻿using GodotXR.Application.DTOs.Request.User;
+using GodotXR.Application.DTOs.Response;
 using GodotXR.Application.DTOs.Response.User;
 using GodotXR.Domain.Entities;
 using GodotXR.Domain.IUnitOfWork;
@@ -14,17 +15,21 @@ namespace GodotXR.Application.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<IEnumerable<UserResponse>> GetAllAsync()
+        public async Task<PagedResponse<UserResponse>> GetListUserAsync(int pageNumber, int pageSize)
         {
-            var users = await _unitOfWork.UserRepository.FindAsync(
-                filter: u => !u.IsDeleted,
-                includeProperties: "Role",
-                tracked: false);
+            var paged = await _unitOfWork.UserRepository.GetPagedAsync(pageNumber, pageSize);
 
-            return users.Select(MapToResponse);
+            return new PagedResponse<UserResponse>
+            {
+                PageNumber = paged.PageNumber,
+                PageSize = paged.PageSize,
+                TotalCount = paged.TotalCount,
+                TotalPages = paged.TotalPages,
+                Items = paged.Items.Select(MapToResponse).ToList(),
+            };
         }
 
-        public async Task<UserResponse?> GetByIdAsync(int id)
+        public async Task<UserResponse?> GetUserByIdAsync(int id)
         {
             var user = await _unitOfWork.UserRepository.GetFirstOrDefaultAsync(
                 filter: u => u.Id == id && !u.IsDeleted,
@@ -34,20 +39,30 @@ namespace GodotXR.Application.Services
             return user == null ? null : MapToResponse(user);
         }
 
-        public async Task<UserResponse> CreateAsync(CreateUserRequest request)
+        public async Task<(bool Succeeded, IEnumerable<string> Errors, UserResponse? Data)> CreateUserAsync(CreateUserRequest request)
         {
-            var exists = await _unitOfWork.UserRepository.ExistsAsync(
+            var errors = new List<string>();
+
+            var usernameExists = await _unitOfWork.UserRepository.ExistsAsync(
                 u => u.Username == request.Username && !u.IsDeleted);
-            if (exists)
-                throw new InvalidOperationException($"Username '{request.Username}' đã tồn tại.");
+
+            if (usernameExists)
+                errors.Add($"Username '{request.Username}' đã tồn tại.");
+
             var emailExists = await _unitOfWork.UserRepository.ExistsAsync(
                 u => u.Email == request.Email && !u.IsDeleted);
+
             if (emailExists)
-                throw new InvalidOperationException($"Email '{request.Email}' đã tồn tại.");
-            var role = await _unitOfWork.Repository<Role>().GetFirstOrDefaultAsync(
+                errors.Add($"Email '{request.Email}' đã tồn tại.");
+
+            var role = await _unitOfWork.RoleRepository.GetFirstOrDefaultAsync(
                 r => r.RoleName == request.RoleName && r.IsActive);
+
             if (role == null)
-                throw new InvalidOperationException($"Role '{request.RoleName}' không tồn tại hoặc không hoạt động.");
+                errors.Add($"Role '{request.RoleName}' không tồn tại hoặc không hoạt động.");
+
+            if (errors.Any())
+                return (false, errors, null);
 
             var user = new User
             {
@@ -56,70 +71,107 @@ namespace GodotXR.Application.Services
                 FullName = request.FullName,
                 Email = request.Email,
                 Phone = request.Phone,
-                RoleId = role.Id,
+                RoleId = role!.Id,
                 IsActive = true
             };
+
             await _unitOfWork.UserRepository.AddAsync(user);
             await _unitOfWork.SaveChangesAsync();
-            var created = await _unitOfWork.UserRepository.GetFirstOrDefaultAsync(
+
+            var createdUser = await _unitOfWork.UserRepository.GetFirstOrDefaultAsync(
                 u => u.Id == user.Id,
                 includeProperties: "Role",
                 tracked: false);
 
-            return MapToResponse(created!);
+            return (true, Enumerable.Empty<string>(), MapToResponse(createdUser!));
         }
 
-        public async Task<UserResponse?> UpdateAsync(int id, UpdateUserRequest request)
+        public async Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors, UserResponse? Data)> UpdateUserAsync(int id, UpdateUserRequest request)
         {
             var user = await _unitOfWork.UserRepository.GetFirstOrDefaultAsync(
                 filter: u => u.Id == id && !u.IsDeleted,
                 includeProperties: "Role");
 
-            if (user == null) return null;
-            if (request.Email != null && request.Email != user.Email)
+            if (user == null)
+                return (false, true, Enumerable.Empty<string>(), null);
+
+            var errors = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(request.Email) &&
+                request.Email != user.Email)
             {
                 var emailExists = await _unitOfWork.UserRepository.ExistsAsync(
-                    u => u.Email == request.Email && u.Id != id && !u.IsDeleted);
-                if (emailExists)
-                    throw new InvalidOperationException($"Email '{request.Email}' đã được dùng bởi tài khoản khác.");
-            }
+                    u => u.Email == request.Email &&
+                         u.Id != id &&
+                         !u.IsDeleted);
 
-            if (request.FullName != null) user.FullName = request.FullName;
-            if (request.Email != null) user.Email = request.Email;
-            if (request.Phone != null) user.Phone = request.Phone;
-            if (request.IsActive.HasValue) user.IsActive = request.IsActive.Value;
+                if (emailExists)
+                    errors.Add($"Email '{request.Email}' đã được dùng bởi tài khoản khác.");
+            }
 
             if (request.RoleName.HasValue)
             {
                 var role = await _unitOfWork.RoleRepository.GetFirstOrDefaultAsync(
                     r => r.RoleName == request.RoleName.Value && r.IsActive);
-                if (role == null)
-                    throw new InvalidOperationException($"Role '{request.RoleName}' không tồn tại hoặc không hoạt động.");
 
-                user.RoleId = role.Id;
-                user.Role = role;
+                if (role == null)
+                {
+                    errors.Add(
+                        $"Role '{request.RoleName}' không tồn tại hoặc không hoạt động.");
+                }
+                else
+                {
+                    user.RoleId = role.Id;
+                    user.Role = role;
+                }
             }
+
+            if (errors.Any())
+                return (false, false, errors, null);
+
+            if (!string.IsNullOrWhiteSpace(request.FullName))
+                user.FullName = request.FullName;
+
+            if (!string.IsNullOrWhiteSpace(request.Email))
+                user.Email = request.Email;
+
+            if (!string.IsNullOrWhiteSpace(request.Phone))
+                user.Phone = request.Phone;
+
+            if (request.IsActive.HasValue)
+                user.IsActive = request.IsActive.Value;
+
             user.UpdatedAt = DateTime.UtcNow;
+
             _unitOfWork.UserRepository.Update(user);
             await _unitOfWork.SaveChangesAsync();
 
-            return MapToResponse(user);
+            return (
+                true,
+                false,
+                Enumerable.Empty<string>(),
+                MapToResponse(user)
+            );
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors)> DeleteUserAsync(int id)
         {
             var user = await _unitOfWork.UserRepository.GetFirstOrDefaultAsync(
                 u => u.Id == id && !u.IsDeleted);
 
-            if (user == null) return false;
+            if (user == null)
+                return (false, true, Enumerable.Empty<string>());
+
             user.IsDeleted = true;
-            user.UpdatedAt = DateTime.UtcNow;
             user.DeletedAt = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.UtcNow;
+
             _unitOfWork.UserRepository.Update(user);
             await _unitOfWork.SaveChangesAsync();
 
-            return true;
+            return (true, false, Enumerable.Empty<string>());
         }
+
         private static UserResponse MapToResponse(User user) => new()
         {
             Id = user.Id,
