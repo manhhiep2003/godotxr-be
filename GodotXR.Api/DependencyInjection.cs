@@ -6,6 +6,23 @@ namespace GodotXR.Api
     {
         public static IServiceCollection AddWebServices(this IServiceCollection services)
         {
+            // CORS Policy
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend",
+                    policy =>
+                    {
+                        policy.WithOrigins(
+                              "http://localhost:3000",
+                              "https://godotxr-h-tr-ng-n-ng-vr-517269026170.asia-southeast1.run.app"
+                          )
+                              .AllowAnyHeader()
+                              .AllowAnyMethod()
+                              .AllowCredentials();
+                    });
+            });
+
+            // Swagger
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(options =>
             {
