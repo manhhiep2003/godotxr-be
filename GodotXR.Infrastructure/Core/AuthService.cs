@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using GodotXR.Application.DTOs.Request.Auth;
+﻿using GodotXR.Application.DTOs.Request.Auth;
 using GodotXR.Application.DTOs.Response.Auth;
 using GodotXR.Application.Services;
 using GodotXR.Domain.IUnitOfWork;
@@ -16,18 +15,21 @@ namespace GodotXR.Infrastructure.Core
         private readonly ITokenService _tokenService;
         private readonly IDistributedCache _cache;
         private readonly IMailService _mailService;
+        private readonly IPasswordHasherService _passwordHasherService;
 
         public AuthService(
             IUnitOfWork unitOfWork, 
             ITokenService tokenService, 
             IConfiguration configuration, 
             IDistributedCache cache,
-            IMailService mailService)
+            IMailService mailService,
+            IPasswordHasherService passwordHasherService)
         {
             _unitOfWork = unitOfWork;
             _tokenService = tokenService;
             _cache = cache;
             _mailService = mailService;
+            _passwordHasherService = passwordHasherService;
         }
 
         public async Task<(bool Succeeded, IEnumerable<string> Errors, TokenModel? Data)> LoginAsync(LoginRequest request)
@@ -302,6 +304,37 @@ namespace GodotXR.Infrastructure.Core
 
             if (affectedRows <= 0)
                 return (false, false, new[] { "Failed to reset password." });
+
+            return (true, false, Enumerable.Empty<string>());
+        }
+
+        public async Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors)> ChangePasswordAsync(ChangePasswordRequest request)
+        {
+            var user = await _unitOfWork.UserRepository
+                .GetFirstOrDefaultAsync(u => u.Email == request.Email);
+
+            if (user == null)
+                return (false, true, Enumerable.Empty<string>());
+
+            if (string.IsNullOrWhiteSpace(request.Password) ||
+                string.IsNullOrWhiteSpace(request.NewPassword) ||
+                string.IsNullOrWhiteSpace(request.ConfirmPassword))
+            {
+                return (false, false, new[] { "All password fields are required." });
+            }
+
+            if (request.NewPassword != request.ConfirmPassword)
+                return (false, false, new[] { "New password and confirmation password do not match." });
+
+            if (request.Password == request.NewPassword)
+                return (false, false, new[] { "New password must be different from the current password." });
+
+            if (!_passwordHasherService.Verify(request.Password, user.PasswordHash))
+                return (false, false, new[] { "Current password is incorrect." });
+
+            user.PasswordHash = _passwordHasherService.Hash(request.NewPassword);
+
+            await _unitOfWork.SaveChangesAsync();
 
             return (true, false, Enumerable.Empty<string>());
         }
