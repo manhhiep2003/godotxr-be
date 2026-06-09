@@ -34,6 +34,7 @@ namespace GodotXR.Infrastructure
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IProgramService, ProgramService>();
             services.AddScoped<ILessonService, LessonService>();
+            services.AddScoped<IExerciseTypeService, ExerciseTypeService>();
             // AutoMapper
             services.AddAutoMapper(cfg =>
             {

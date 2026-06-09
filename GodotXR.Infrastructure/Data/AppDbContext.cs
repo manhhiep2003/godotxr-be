@@ -11,20 +11,15 @@ namespace GodotXR.Infrastructure.Data
         {
         }
 
-        // Identity
         public DbSet<Role> Roles { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<GodotXR.Domain.Entities.Program> Programs { get; set; }
         public DbSet<Lesson> Lessons { get; set; }
-
+        public DbSet<ExerciseType> ExerciseTypes { get; set; } 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            // Apply Fluent API Configurations
             FluentApiConfiguration.Configure(modelBuilder);
-
-            // Seeding Data
             DbSeeder.Seed(modelBuilder);
         }
     }

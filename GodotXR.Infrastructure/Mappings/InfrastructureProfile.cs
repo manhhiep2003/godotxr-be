@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using GodotXR.Application.DTOs.Response.ExerciseType;
 using GodotXR.Application.DTOs.Response.Lesson;
 using GodotXR.Application.DTOs.Response.Program;
 using GodotXR.Domain.Entities;
@@ -22,6 +23,7 @@ namespace GodotXR.Infrastructure.Mappings
                     src.Lessons.Where(l => !l.IsDeleted).ToList()));
             CreateMap<Lesson, LessonSummaryResponse>();
             CreateMap<Lesson, LessonResponse>();
+            CreateMap<ExerciseType, ExerciseTypeResponse>();
         }
     }
 }

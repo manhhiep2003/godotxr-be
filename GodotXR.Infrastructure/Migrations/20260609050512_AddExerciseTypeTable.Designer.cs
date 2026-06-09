@@ -4,6 +4,7 @@ using GodotXR.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GodotXR.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260609050512_AddExerciseTypeTable")]
+    partial class AddExerciseTypeTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,39 +24,6 @@ namespace GodotXR.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("GodotXR.Domain.Entities.ExerciseType", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("TypeName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ExerciseTypes");
-                });
 
             modelBuilder.Entity("GodotXR.Domain.Entities.Lesson", b =>
                 {
@@ -189,7 +159,7 @@ namespace GodotXR.Infrastructure.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2026, 6, 9, 5, 13, 10, 44, DateTimeKind.Utc).AddTicks(7867),
+                            CreatedAt = new DateTime(2026, 6, 9, 5, 5, 11, 882, DateTimeKind.Utc).AddTicks(936),
                             Description = "System Administrator",
                             IsActive = true,
                             IsDeleted = false,
@@ -198,7 +168,7 @@ namespace GodotXR.Infrastructure.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2026, 6, 9, 5, 13, 10, 44, DateTimeKind.Utc).AddTicks(7871),
+                            CreatedAt = new DateTime(2026, 6, 9, 5, 5, 11, 882, DateTimeKind.Utc).AddTicks(940),
                             Description = "Teacher",
                             IsActive = true,
                             IsDeleted = false,
@@ -207,7 +177,7 @@ namespace GodotXR.Infrastructure.Migrations
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2026, 6, 9, 5, 13, 10, 44, DateTimeKind.Utc).AddTicks(7873),
+                            CreatedAt = new DateTime(2026, 6, 9, 5, 5, 11, 882, DateTimeKind.Utc).AddTicks(941),
                             Description = "Parent",
                             IsActive = true,
                             IsDeleted = false,
@@ -216,7 +186,7 @@ namespace GodotXR.Infrastructure.Migrations
                         new
                         {
                             Id = 4,
-                            CreatedAt = new DateTime(2026, 6, 9, 5, 13, 10, 44, DateTimeKind.Utc).AddTicks(7874),
+                            CreatedAt = new DateTime(2026, 6, 9, 5, 5, 11, 882, DateTimeKind.Utc).AddTicks(942),
                             Description = "Child",
                             IsActive = true,
                             IsDeleted = false,
