@@ -1,7 +1,6 @@
 ﻿using GodotXR.Application.DTOs.Request.Auth;
 using GodotXR.Application.DTOs.Response;
 using GodotXR.Application.DTOs.Response.Auth;
-using GodotXR.Application.DTOs.Response.User;
 using GodotXR.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -79,8 +78,7 @@ namespace GodotXR.Api.Controllers
                 });
             }
 
-            var (ok, errors, data)
-                = await _authService.RefreshTokenAsync(request);
+            var (ok, errors, data) = await _authService.RefreshTokenAsync(request);
 
             if (!ok || data == null)
             {
@@ -97,6 +95,47 @@ namespace GodotXR.Api.Controllers
                 Success = true,
                 Message = "Token refreshed successfully.",
                 Data = data
+            });
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<ActionResult> ForgotPassword(
+            [FromBody] ForgotPasswordRequest request)
+        {
+            if (request is null)
+            {
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Request body is required."
+                });
+            }
+
+            var (ok, notFound, errors) = await _authService.ForgotPasswordAsync(request.Email);
+
+            if (notFound)
+            {
+                return NotFound(new ApiResponse
+                {
+                    Success = false,
+                    Message = "User not found."
+                });
+            }
+
+            if (!ok)
+            {
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Forgot password failed.",
+                    Errors = errors.ToList()
+                });
+            }
+
+            return Ok(new ApiResponse
+            {
+                Success = true,
+                Message = "OTP has been sent successfully."
             });
         }
     }

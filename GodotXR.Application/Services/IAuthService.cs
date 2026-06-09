@@ -5,14 +5,10 @@ namespace GodotXR.Application.Services
 {
     public interface IAuthService
     {
-        Task<(bool Succeeded,
-              IEnumerable<string> Errors,
-              TokenModel? Data)>
-            LoginAsync(LoginRequest request);
+        Task<(bool Succeeded, IEnumerable<string> Errors, TokenModel? Data)> LoginAsync(LoginRequest request);
 
-        Task<(bool Succeeded,
-              IEnumerable<string> Errors,
-              TokenModel? Data)>
-            RefreshTokenAsync(RefreshTokenRequest request);
+        Task<(bool Succeeded, IEnumerable<string> Errors, TokenModel? Data)> RefreshTokenAsync(RefreshTokenRequest request);
+
+        Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors)> ForgotPasswordAsync(string email);
     }
 }

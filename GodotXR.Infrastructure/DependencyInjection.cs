@@ -65,6 +65,15 @@ namespace GodotXR.Infrastructure
                 cfg.AddMaps(typeof(InfrastructureProfile).Assembly);
             });
 
+            // Email
+            services.Configure<EmailOptions>(
+                configuration.GetSection("Email"));
+
+            services.AddHttpClient<IMailService, BrevoEmailService>(client =>
+            {
+                client.BaseAddress = new Uri("https://api.brevo.com/");
+            });
+
             // JWT
             var jwtSettings = configuration.GetSection("Jwt");
             var key = Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? "SecretKeyMustBeAtLeast32CharactersLong");

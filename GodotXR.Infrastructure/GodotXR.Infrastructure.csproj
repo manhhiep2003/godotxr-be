@@ -21,6 +21,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.18.0" />
     <PackageReference Include="Minio" Version="7.0.0" />
+    <PackageReference Include="Resend" Version="0.5.1" />
   </ItemGroup>
 
   <ItemGroup>
