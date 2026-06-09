@@ -22,6 +22,108 @@ namespace GodotXR.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("GodotXR.Domain.Entities.Lesson", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("EstimatedDuration")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LessonName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("LessonOrder")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProgramId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("TargetSkill")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProgramId");
+
+                    b.ToTable("Lessons");
+                });
+
+            modelBuilder.Entity("GodotXR.Domain.Entities.Program", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ProgramName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("TargetAgeFrom")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TargetAgeTo")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Programs");
+                });
+
             modelBuilder.Entity("GodotXR.Domain.Entities.Role", b =>
                 {
                     b.Property<int>("Id")
@@ -31,6 +133,9 @@ namespace GodotXR.Infrastructure.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
@@ -60,7 +165,7 @@ namespace GodotXR.Infrastructure.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2026, 5, 29, 7, 31, 22, 146, DateTimeKind.Utc).AddTicks(8046),
+                            CreatedAt = new DateTime(2026, 6, 9, 11, 8, 48, 193, DateTimeKind.Utc).AddTicks(1238),
                             Description = "System Administrator",
                             IsActive = true,
                             IsDeleted = false,
@@ -69,20 +174,29 @@ namespace GodotXR.Infrastructure.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2026, 5, 29, 7, 31, 22, 146, DateTimeKind.Utc).AddTicks(8050),
-                            Description = "Lecture",
+                            CreatedAt = new DateTime(2026, 6, 9, 11, 8, 48, 193, DateTimeKind.Utc).AddTicks(1242),
+                            Description = "Teacher",
                             IsActive = true,
                             IsDeleted = false,
-                            RoleName = "Lecture"
+                            RoleName = "Teacher"
                         },
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2026, 5, 29, 7, 31, 22, 146, DateTimeKind.Utc).AddTicks(8052),
+                            CreatedAt = new DateTime(2026, 6, 9, 11, 8, 48, 193, DateTimeKind.Utc).AddTicks(1244),
                             Description = "Parent",
                             IsActive = true,
                             IsDeleted = false,
                             RoleName = "Parent"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CreatedAt = new DateTime(2026, 6, 9, 11, 8, 48, 193, DateTimeKind.Utc).AddTicks(1245),
+                            Description = "Child",
+                            IsActive = true,
+                            IsDeleted = false,
+                            RoleName = "Child"
                         });
                 });
 
@@ -95,6 +209,9 @@ namespace GodotXR.Infrastructure.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Email")
@@ -158,15 +275,26 @@ namespace GodotXR.Infrastructure.Migrations
                         {
                             Id = 2,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Email = "lecture@godotxr.com",
+                            Email = "teacher@godotxr.com",
                             FullName = "Doan Manh Hiep",
                             IsActive = true,
                             IsDeleted = false,
                             PasswordHash = "$2a$12$fm/KNqTHvTPZ.Xp17lMgpO7C5oJzF9lUi9niXMOX5mriX6xG9VPdu",
                             Phone = "0987654321",
                             RoleId = 2,
-                            Username = "lecture"
+                            Username = "teacher"
                         });
+                });
+
+            modelBuilder.Entity("GodotXR.Domain.Entities.Lesson", b =>
+                {
+                    b.HasOne("GodotXR.Domain.Entities.Program", "Program")
+                        .WithMany("Lessons")
+                        .HasForeignKey("ProgramId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Program");
                 });
 
             modelBuilder.Entity("GodotXR.Domain.Entities.User", b =>
@@ -178,6 +306,11 @@ namespace GodotXR.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("GodotXR.Domain.Entities.Program", b =>
+                {
+                    b.Navigation("Lessons");
                 });
 
             modelBuilder.Entity("GodotXR.Domain.Entities.Role", b =>

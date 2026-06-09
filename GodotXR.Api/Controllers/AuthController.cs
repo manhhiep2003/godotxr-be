@@ -1,6 +1,6 @@
-﻿using GodotXR.Application.DTOs.Response.Auth;
-using GodotXR.Application.DTOs.Request.Auth;
+﻿using GodotXR.Application.DTOs.Request.Auth;
 using GodotXR.Application.DTOs.Response;
+using GodotXR.Application.DTOs.Response.Auth;
 using GodotXR.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,22 +23,120 @@ namespace GodotXR.Api.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<ApiResponse<TokenModel>>> Login([FromBody] LoginRequest request)
+        [ProducesResponseType(typeof(ApiResponse<TokenModel>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<TokenModel>), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult> Login(
+            [FromBody] LoginRequest request)
         {
             if (!ModelState.IsValid)
             {
-                var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
-                return BadRequest(ApiResponse<TokenModel>.FailureResponse("Validation failed", errors));
+                var validErrors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+
+                return BadRequest(new ApiResponse<TokenModel>
+                {
+                    Success = false,
+                    Message = "Validation failed.",
+                    Errors = validErrors
+                });
             }
 
-            var result = await _authService.Login(request);
+            var (ok, errors, data) = await _authService.LoginAsync(request);
 
-            if (result == null)
+            if (!ok || data == null)
             {
-                return Unauthorized(ApiResponse<TokenModel>.FailureResponse("Invalid username or password."));
+                return Unauthorized(new ApiResponse<TokenModel>
+                {
+                    Success = false,
+                    Message = "Login failed.",
+                    Errors = errors.ToList()
+                });
             }
 
-            return Ok(ApiResponse<TokenModel>.SuccessResponse(result, "Login successful"));
+            return Ok(new ApiResponse<TokenModel>
+            {
+                Success = true,
+                Message = "Login successful.",
+                Data = data
+            });
+        }
+
+        [HttpPost("refresh-token")]
+        [ProducesResponseType(typeof(ApiResponse<TokenModel>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<TokenModel>), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult> RefreshToken(
+            [FromBody] RefreshTokenRequest request)
+        {
+            if (request == null)
+            {
+                return BadRequest(new ApiResponse<TokenModel>
+                {
+                    Success = false,
+                    Message = "Invalid request."
+                });
+            }
+
+            var (ok, errors, data) = await _authService.RefreshTokenAsync(request);
+
+            if (!ok || data == null)
+            {
+                return BadRequest(new ApiResponse<TokenModel>
+                {
+                    Success = false,
+                    Message = "Refresh token failed.",
+                    Errors = errors.ToList()
+                });
+            }
+
+            return Ok(new ApiResponse<TokenModel>
+            {
+                Success = true,
+                Message = "Token refreshed successfully.",
+                Data = data
+            });
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<ActionResult> ForgotPassword(
+            [FromBody] ForgotPasswordRequest request)
+        {
+            if (request is null)
+            {
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Request body is required."
+                });
+            }
+
+            var (ok, notFound, errors) = await _authService.ForgotPasswordAsync(request.Email);
+
+            if (notFound)
+            {
+                return NotFound(new ApiResponse
+                {
+                    Success = false,
+                    Message = "User not found."
+                });
+            }
+
+            if (!ok)
+            {
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Forgot password failed.",
+                    Errors = errors.ToList()
+                });
+            }
+
+            return Ok(new ApiResponse
+            {
+                Success = true,
+                Message = "OTP has been sent successfully."
+            });
         }
     }
 }

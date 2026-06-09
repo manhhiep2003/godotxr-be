@@ -14,6 +14,8 @@ namespace GodotXR.Infrastructure.Data
         // Identity
         public DbSet<Role> Roles { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<GodotXR.Domain.Entities.Program> Programs { get; set; }
+        public DbSet<Lesson> Lessons { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
