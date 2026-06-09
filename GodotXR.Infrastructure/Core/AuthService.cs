@@ -272,5 +272,38 @@ namespace GodotXR.Infrastructure.Core
                 return (false, false, new[] { $"Failed to send email: {ex.Message}" });
             }
         }
+
+        public async Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors)> ResetPasswordAsync(ResetPasswordRequest request)
+        {
+            var user = await _unitOfWork.UserRepository
+                .GetFirstOrDefaultAsync(u => u.Email == request.Email);
+
+            if (user == null)
+                return (false, true, Enumerable.Empty<string>());
+
+            var cacheKey = $"otp:{request.Email}";
+            var savedOtp = await _cache.GetStringAsync(cacheKey);
+
+            var trimmedSavedOtp = savedOtp?.Trim();
+            var trimmedRequestOtp = request.Otp?.Trim();
+
+            if (string.IsNullOrEmpty(trimmedSavedOtp) ||
+                trimmedSavedOtp != trimmedRequestOtp)
+            {
+                return (false, false, new[] { "Invalid or expired OTP code." });
+            }
+
+            await _cache.RemoveAsync(cacheKey);
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.UpdatedAt = DateTime.UtcNow;
+
+            var affectedRows = await _unitOfWork.SaveChangesAsync();
+
+            if (affectedRows <= 0)
+                return (false, false, new[] { "Failed to reset password." });
+
+            return (true, false, Enumerable.Empty<string>());
+        }
     }
 }
