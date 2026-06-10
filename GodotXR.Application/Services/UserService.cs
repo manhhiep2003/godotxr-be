@@ -17,7 +17,11 @@ namespace GodotXR.Application.Services
 
         public async Task<PagedResponse<UserResponse>> GetListUserAsync(int pageNumber, int pageSize)
         {
-            var paged = await _unitOfWork.UserRepository.GetPagedAsync(pageNumber, pageSize);
+            var paged = await _unitOfWork.UserRepository.GetPagedAsync(
+        pageNumber,
+        pageSize,
+        r => r.IsActive && !r.IsDeleted,
+        includeProperties: "Role");
 
             return new PagedResponse<UserResponse>
             {
@@ -55,6 +59,7 @@ namespace GodotXR.Application.Services
             if (emailExists)
                 errors.Add($"Email '{request.Email}' đã tồn tại.");
 
+
             var role = await _unitOfWork.RoleRepository.GetFirstOrDefaultAsync(
                 r => r.RoleName == request.RoleName && r.IsActive);
 
@@ -71,6 +76,8 @@ namespace GodotXR.Application.Services
                 FullName = request.FullName,
                 Email = request.Email,
                 Phone = request.Phone,
+                Gender = request.Gender,
+                Specialty = request.Specialty,
                 RoleId = role!.Id,
                 IsActive = true
             };
@@ -135,6 +142,12 @@ namespace GodotXR.Application.Services
             if (!string.IsNullOrWhiteSpace(request.Email))
                 user.Email = request.Email;
 
+            if (!string.IsNullOrWhiteSpace(request.Gender))
+                user.Gender = request.Gender;
+
+            if (!string.IsNullOrWhiteSpace(request.Specialty))
+                user.Specialty = request.Specialty;
+
             if (!string.IsNullOrWhiteSpace(request.Phone))
                 user.Phone = request.Phone;
 
@@ -179,6 +192,8 @@ namespace GodotXR.Application.Services
             FullName = user.FullName,
             Email = user.Email,
             Phone = user.Phone ?? string.Empty,
+            Gender = user.Gender,
+            Specialty = user.Specialty,
             RoleName = user.Role?.RoleName.ToString() ?? string.Empty,
             IsActive = user.IsActive,
             CreatedAt = user.CreatedAt,

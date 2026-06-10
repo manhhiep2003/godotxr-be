@@ -30,6 +30,13 @@ namespace GodotXR.Application.DTOs.Request.User
         [Phone]
         [MaxLength(20)]
         public string Phone { get; set; } = string.Empty;
+        [Required]
+        [MaxLength(20)]
+        public string Gender { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(100)]
+        public string Specialty { get; set; } = string.Empty;
 
         [Required]
         public UserRole RoleName { get; set; }

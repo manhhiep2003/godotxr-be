@@ -15,6 +15,8 @@ namespace GodotXR.Application.DTOs.Response.User
         public string Phone { get; set; } = string.Empty;
         public string RoleName { get; set; } = string.Empty;
         public bool IsActive { get; set; }
+        public string Gender { get; set; } = string.Empty;
+        public string Specialty { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
     }
