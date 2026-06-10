@@ -11,11 +11,11 @@ namespace GodotXR.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ProgramController : ControllerBase
+    public class ProgramsController : ControllerBase
     {
         private readonly IProgramService _programService;
 
-        public ProgramController(IProgramService programService)
+        public ProgramsController(IProgramService programService)
         {
             _programService = programService;
         }
