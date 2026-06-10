@@ -38,39 +38,23 @@ namespace GodotXR.Infrastructure.Core
                 u => u.Email == request.Email,
                 includeProperties: "Role");
 
-            if (user == null)
-            {
-                return (
-                    false,
-                    new[] { "Invalid email or password." },
-                    null
-                );
-            }
-
+            if (user == null)       
+                return (false, new[] { "Invalid email or password." }, null );
+            
             if (!BCrypt.Net.BCrypt.Verify(
                 request.Password,
-                user.PasswordHash))
-            {
-                return (
-                    false,
-                    new[] { "Invalid email or password." },
-                    null
-                );
-            }
+                user.PasswordHash)) 
+                return (false, new[] { "Invalid email or password." }, null);        
 
             var accessToken = _tokenService.GenerateAccessToken(user);
             var refreshToken = _tokenService.GenerateRefreshToken();
 
             var cacheKey = $"refreshToken:{user.Email}";
 
-            await _cache.SetStringAsync(
-                cacheKey,
-                refreshToken,
-                new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow =
-                        TimeSpan.FromDays(7)
-                });
+            await _cache.SetStringAsync(cacheKey, refreshToken, new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(7)
+            });
 
             var token = new TokenModel
             {
@@ -96,41 +80,26 @@ namespace GodotXR.Infrastructure.Core
             var principal = _tokenService.GetPrincipalFromExpiredToken(request.AccessToken);
 
             if (principal == null)
-            {
-                return (
-                    false,
-                    new[] { "Invalid access token." },
-                    null
-                );
-            }
+                return (false, new[] { "Invalid access token." }, null);
 
-            var email = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+            var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            if (string.IsNullOrEmpty(email))
-            {
-                return (
-                    false,
-                    new[] { "Invalid token." },
-                    null
-                );
-            }
+            if (!int.TryParse(userIdClaim, out var userId))
+                return (false, new[] { "Invalid token." }, null);
 
             var user = await _unitOfWork.UserRepository.GetFirstOrDefaultAsync(
-                    u => u.Email == email,
-                    includeProperties: "Role");
+                u => u.Id == userId,
+                includeProperties: "Role");
 
-            var cacheKey = $"refreshToken:{email}";
+            if (user == null)
+                return (false, new[] { "User not found." }, null);
+
+            var cacheKey = $"refreshToken:{user.Email}";
 
             var savedRefreshToken = await _cache.GetStringAsync(cacheKey);
 
-            if (user == null || savedRefreshToken != request.RefreshToken)
-            {
-                return (
-                    false,
-                    new[] { "Invalid refresh token." },
-                    null
-                );
-            }
+            if (savedRefreshToken != request.RefreshToken)
+                return (false, new[] { "Invalid refresh token." }, null);
 
             var newAccessToken = _tokenService.GenerateAccessToken(user);
             var newRefreshToken = _tokenService.GenerateRefreshToken();
