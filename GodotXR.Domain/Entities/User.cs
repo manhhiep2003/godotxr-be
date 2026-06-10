@@ -25,13 +25,19 @@ namespace GodotXR.Domain.Entities
         [MaxLength(20)]
         public string Phone { get; set; } = string.Empty;
 
+        [MaxLength(20)]
+        public string Gender { get; set; } = string.Empty;
+
+        [MaxLength(100)]
+        public string Specialty { get; set; } = string.Empty;
+
         public bool IsActive { get; set; } = true;
 
         // Foreign Keys
         public int RoleId { get; set; }
 
         // Navigation Properties
-        [ForeignKey("RoleId")]
+        [ForeignKey(nameof(RoleId))]
         public virtual Role Role { get; set; } = null!;
     }
 }

@@ -10,20 +10,22 @@ namespace GodotXR.Api.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize(Roles = "Admin")]
-    public class UserController : ControllerBase
+    public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
 
-        public UserController(IUserService userService)
+        public UsersController(IUserService userService)
         {
             _userService = userService;
         }
+
         [HttpGet]
         public async Task<ActionResult<ApiResponse<IEnumerable<UserResponse>>>> GetAll()
         {
             var users = await _userService.GetAllAsync();
             return Ok(ApiResponse<IEnumerable<UserResponse>>.SuccessResponse(users));
         }
+
         [HttpGet("{id:int}")]
         public async Task<ActionResult<ApiResponse<UserResponse>>> GetById(int id)
         {
@@ -33,6 +35,7 @@ namespace GodotXR.Api.Controllers
 
             return Ok(ApiResponse<UserResponse>.SuccessResponse(user));
         }
+
         [HttpPost]
         public async Task<ActionResult<ApiResponse<UserResponse>>> Create([FromBody] CreateUserRequest request)
         {
@@ -41,6 +44,7 @@ namespace GodotXR.Api.Controllers
                 var errors = ModelState.Values
                     .SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
                     .ToList();
+
                 return BadRequest(ApiResponse<UserResponse>.FailureResponse("Validation failed", errors));
             }
 
@@ -57,17 +61,19 @@ namespace GodotXR.Api.Controllers
                 return BadRequest(ApiResponse<UserResponse>.FailureResponse(ex.Message));
             }
         }
+
         [HttpPut("{id:int}")]
-        public async Task<ActionResult<ApiResponse<UserResponse>>> Update(
-            int id, [FromBody] UpdateUserRequest request)
+        public async Task<ActionResult<ApiResponse<UserResponse>>> Update(int id, [FromBody] UpdateUserRequest request)
         {
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values
                     .SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
                     .ToList();
+
                 return BadRequest(ApiResponse<UserResponse>.FailureResponse("Validation failed", errors));
             }
+
             try
             {
                 var updated = await _userService.UpdateAsync(id, request);
@@ -81,6 +87,7 @@ namespace GodotXR.Api.Controllers
                 return BadRequest(ApiResponse<UserResponse>.FailureResponse(ex.Message));
             }
         }
+
         [HttpDelete("{id:int}")]
         public async Task<ActionResult<ApiResponse>> Delete(int id)
         {

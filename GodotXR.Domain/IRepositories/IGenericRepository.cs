@@ -10,12 +10,12 @@ namespace GodotXR.Domain.IRepositories
         Task<IEnumerable<T>> FindAsync(
             Expression<Func<T, bool>>? filter = null,
             Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
-            string includeProperties = "",
+            string includeProperties = "Role",
             bool tracked = true);
 
         Task<T?> GetFirstOrDefaultAsync(
             Expression<Func<T, bool>> filter,
-            string includeProperties = "",
+            string includeProperties = "Role",
             bool tracked = true);
 
         Task AddAsync(T entity);
