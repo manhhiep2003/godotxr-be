@@ -28,12 +28,13 @@ namespace GodotXR.Infrastructure.Repositories
         }
 
         public async Task<PagedResult<T>> GetPagedAsync(
-        int pageNumber,
-        int pageSize,
-        Expression<Func<T, bool>>? predicate = null,
-        Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
-        bool asNoTracking = true,
-        CancellationToken cancellationToken = default)
+      int pageNumber,
+      int pageSize,
+      Expression<Func<T, bool>>? predicate = null,
+      Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
+      bool asNoTracking = true,
+      string includeProperties = "",
+      CancellationToken cancellationToken = default)
         {
             var normalizedPageNumber = pageNumber < 1 ? 1 : pageNumber;
             var normalizedPageSize = pageSize < 1 ? 10 : pageSize;
@@ -46,14 +47,27 @@ namespace GodotXR.Infrastructure.Repositories
                 query = query.AsNoTracking();
             }
 
-            if (predicate is not null)
+            if (predicate != null)
             {
                 query = query.Where(predicate);
             }
 
+            foreach (var includeProperty in includeProperties.Split(
+                new char[] { ',' },
+                StringSplitOptions.RemoveEmptyEntries))
+            {
+                query = query.Include(includeProperty.Trim());
+            }
+
+            if (!string.IsNullOrWhiteSpace(includeProperties) &&
+                _context.Database.IsRelational())
+            {
+                query = query.AsSplitQuery();
+            }
+
             var totalCount = await query.CountAsync(cancellationToken);
 
-            if (orderBy is not null)
+            if (orderBy != null)
             {
                 query = orderBy(query);
             }
@@ -73,7 +87,7 @@ namespace GodotXR.Infrastructure.Repositories
                 PageSize = normalizedPageSize,
                 TotalCount = totalCount,
                 TotalPages = totalPages,
-                Items = items,
+                Items = items
             };
         }
 

@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using GodotXR.Application.DTOs.Request.Auth;
+﻿using GodotXR.Application.DTOs.Request.Auth;
 using GodotXR.Application.DTOs.Response.Auth;
 using GodotXR.Application.Services;
 using GodotXR.Domain.IUnitOfWork;
@@ -16,18 +15,21 @@ namespace GodotXR.Infrastructure.Core
         private readonly ITokenService _tokenService;
         private readonly IDistributedCache _cache;
         private readonly IMailService _mailService;
+        private readonly IPasswordHasherService _passwordHasherService;
 
         public AuthService(
             IUnitOfWork unitOfWork, 
             ITokenService tokenService, 
             IConfiguration configuration, 
             IDistributedCache cache,
-            IMailService mailService)
+            IMailService mailService,
+            IPasswordHasherService passwordHasherService)
         {
             _unitOfWork = unitOfWork;
             _tokenService = tokenService;
             _cache = cache;
             _mailService = mailService;
+            _passwordHasherService = passwordHasherService;
         }
 
         public async Task<(bool Succeeded, IEnumerable<string> Errors, TokenModel? Data)> LoginAsync(LoginRequest request)
@@ -36,39 +38,23 @@ namespace GodotXR.Infrastructure.Core
                 u => u.Email == request.Email,
                 includeProperties: "Role");
 
-            if (user == null)
-            {
-                return (
-                    false,
-                    new[] { "Invalid email or password." },
-                    null
-                );
-            }
-
+            if (user == null)       
+                return (false, new[] { "Invalid email or password." }, null );
+            
             if (!BCrypt.Net.BCrypt.Verify(
                 request.Password,
-                user.PasswordHash))
-            {
-                return (
-                    false,
-                    new[] { "Invalid email or password." },
-                    null
-                );
-            }
+                user.PasswordHash)) 
+                return (false, new[] { "Invalid email or password." }, null);        
 
             var accessToken = _tokenService.GenerateAccessToken(user);
             var refreshToken = _tokenService.GenerateRefreshToken();
 
             var cacheKey = $"refreshToken:{user.Email}";
 
-            await _cache.SetStringAsync(
-                cacheKey,
-                refreshToken,
-                new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow =
-                        TimeSpan.FromDays(7)
-                });
+            await _cache.SetStringAsync(cacheKey, refreshToken, new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(7)
+            });
 
             var token = new TokenModel
             {
@@ -94,41 +80,26 @@ namespace GodotXR.Infrastructure.Core
             var principal = _tokenService.GetPrincipalFromExpiredToken(request.AccessToken);
 
             if (principal == null)
-            {
-                return (
-                    false,
-                    new[] { "Invalid access token." },
-                    null
-                );
-            }
+                return (false, new[] { "Invalid access token." }, null);
 
-            var email = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+            var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            if (string.IsNullOrEmpty(email))
-            {
-                return (
-                    false,
-                    new[] { "Invalid token." },
-                    null
-                );
-            }
+            if (!int.TryParse(userIdClaim, out var userId))
+                return (false, new[] { "Invalid token." }, null);
 
             var user = await _unitOfWork.UserRepository.GetFirstOrDefaultAsync(
-                    u => u.Email == email,
-                    includeProperties: "Role");
+                u => u.Id == userId,
+                includeProperties: "Role");
 
-            var cacheKey = $"refreshToken:{email}";
+            if (user == null)
+                return (false, new[] { "User not found." }, null);
+
+            var cacheKey = $"refreshToken:{user.Email}";
 
             var savedRefreshToken = await _cache.GetStringAsync(cacheKey);
 
-            if (user == null || savedRefreshToken != request.RefreshToken)
-            {
-                return (
-                    false,
-                    new[] { "Invalid refresh token." },
-                    null
-                );
-            }
+            if (savedRefreshToken != request.RefreshToken)
+                return (false, new[] { "Invalid refresh token." }, null);
 
             var newAccessToken = _tokenService.GenerateAccessToken(user);
             var newRefreshToken = _tokenService.GenerateRefreshToken();
@@ -271,6 +242,70 @@ namespace GodotXR.Infrastructure.Core
             {
                 return (false, false, new[] { $"Failed to send email: {ex.Message}" });
             }
+        }
+
+        public async Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors)> ResetPasswordAsync(ResetPasswordRequest request)
+        {
+            var user = await _unitOfWork.UserRepository
+                .GetFirstOrDefaultAsync(u => u.Email == request.Email);
+
+            if (user == null)
+                return (false, true, Enumerable.Empty<string>());
+
+            var cacheKey = $"otp:{request.Email}";
+            var savedOtp = await _cache.GetStringAsync(cacheKey);
+
+            var trimmedSavedOtp = savedOtp?.Trim();
+            var trimmedRequestOtp = request.Otp?.Trim();
+
+            if (string.IsNullOrEmpty(trimmedSavedOtp) ||
+                trimmedSavedOtp != trimmedRequestOtp)
+            {
+                return (false, false, new[] { "Invalid or expired OTP code." });
+            }
+
+            await _cache.RemoveAsync(cacheKey);
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.UpdatedAt = DateTime.UtcNow;
+
+            var affectedRows = await _unitOfWork.SaveChangesAsync();
+
+            if (affectedRows <= 0)
+                return (false, false, new[] { "Failed to reset password." });
+
+            return (true, false, Enumerable.Empty<string>());
+        }
+
+        public async Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors)> ChangePasswordAsync(ChangePasswordRequest request)
+        {
+            var user = await _unitOfWork.UserRepository
+                .GetFirstOrDefaultAsync(u => u.Email == request.Email);
+
+            if (user == null)
+                return (false, true, Enumerable.Empty<string>());
+
+            if (string.IsNullOrWhiteSpace(request.Password) ||
+                string.IsNullOrWhiteSpace(request.NewPassword) ||
+                string.IsNullOrWhiteSpace(request.ConfirmPassword))
+            {
+                return (false, false, new[] { "All password fields are required." });
+            }
+
+            if (request.NewPassword != request.ConfirmPassword)
+                return (false, false, new[] { "New password and confirmation password do not match." });
+
+            if (request.Password == request.NewPassword)
+                return (false, false, new[] { "New password must be different from the current password." });
+
+            if (!_passwordHasherService.Verify(request.Password, user.PasswordHash))
+                return (false, false, new[] { "Current password is incorrect." });
+
+            user.PasswordHash = _passwordHasherService.Hash(request.NewPassword);
+
+            await _unitOfWork.SaveChangesAsync();
+
+            return (true, false, Enumerable.Empty<string>());
         }
     }
 }

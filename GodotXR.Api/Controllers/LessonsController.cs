@@ -10,11 +10,11 @@ namespace GodotXR.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class LessonController : ControllerBase
+    public class LessonsController : ControllerBase
     {
         private readonly ILessonService _lessonService;
 
-        public LessonController(ILessonService lessonService)
+        public LessonsController(ILessonService lessonService)
         {
             _lessonService = lessonService;
         }

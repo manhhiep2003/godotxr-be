@@ -138,5 +138,87 @@ namespace GodotXR.Api.Controllers
                 Message = "OTP has been sent successfully."
             });
         }
+
+        [HttpPost("reset-password")]
+        public async Task<ActionResult> ResetPassword(
+            [FromBody] ResetPasswordRequest request)
+        {
+            if (request is null)
+            {
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Request body is required."
+                });
+            }
+
+            var (ok, notFound, errors) = await _authService.ResetPasswordAsync(request);
+
+            if (notFound)
+            {
+                return NotFound(new ApiResponse
+                {
+                    Success = false,
+                    Message = "User not found."
+                });
+            }
+
+            if (!ok)
+            {
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Reset password failed.",
+                    Errors = errors.ToList()
+                });
+            }
+
+            return Ok(new ApiResponse
+            {
+                Success = true,
+                Message = "Password has been reset successfully."
+            });
+        }
+
+        [HttpPost("change-password")]
+        public async Task<ActionResult> ChangePassword(
+            [FromBody] ChangePasswordRequest request)
+        {
+            if (request is null)
+            {
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Request body is required."
+                });
+            }
+
+            var (ok, notFound, errors) = await _authService.ChangePasswordAsync(request);
+
+            if (notFound)
+            {
+                return NotFound(new ApiResponse
+                {
+                    Success = false,
+                    Message = "User not found."
+                });
+            }
+
+            if (!ok)
+            {
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Change password failed.",
+                    Errors = errors.ToList()
+                });
+            }
+
+            return Ok(new ApiResponse
+            {
+                Success = true,
+                Message = "Password has been changed successfully."
+            });
+        }
     }
 }

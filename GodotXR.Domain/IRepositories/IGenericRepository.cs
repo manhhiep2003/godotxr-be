@@ -14,6 +14,7 @@ namespace GodotXR.Domain.IRepositories
             Expression<Func<T, bool>>? predicate = null,
             Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
             bool asNoTracking = true,
+            string includeProperties = "",
             CancellationToken cancellationToken = default);
 
         Task<IEnumerable<T>> FindAsync(

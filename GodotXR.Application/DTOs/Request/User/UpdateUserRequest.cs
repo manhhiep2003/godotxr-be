@@ -22,6 +22,11 @@ namespace GodotXR.Application.DTOs.Request.User
         public string? Phone { get; set; }
 
         public UserRole? RoleName { get; set; }
+        [MaxLength(20)]
+        public string? Gender { get; set; }
+
+        [MaxLength(100)]
+        public string? Specialty { get; set; }
 
         public bool? IsActive { get; set; }
     }

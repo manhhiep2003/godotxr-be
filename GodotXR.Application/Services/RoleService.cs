@@ -1,7 +1,6 @@
 ﻿using GodotXR.Application.DTOs.Request.Role;
 using GodotXR.Application.DTOs.Response;
 using GodotXR.Application.DTOs.Response.Role;
-using GodotXR.Application.DTOs.Response.User;
 using GodotXR.Domain.Entities;
 using GodotXR.Domain.IUnitOfWork;
 
@@ -18,7 +17,10 @@ namespace GodotXR.Application.Services
 
         public async Task<PagedResponse<RoleResponse>> GetListRoleAsync(int pageNumber, int pageSize)
         {
-            var paged = await _unitOfWork.RoleRepository.GetPagedAsync(pageNumber, pageSize);
+            var paged = await _unitOfWork.RoleRepository.GetPagedAsync(
+                pageNumber, 
+                pageSize, 
+                r => r.IsActive && !r.IsDeleted);
 
             return new PagedResponse<RoleResponse>
             {
@@ -48,7 +50,7 @@ namespace GodotXR.Application.Services
                      !r.IsDeleted);
 
             if (exists)
-                errors.Add($"Role '{request.RoleName}' đã tồn tại.");
+                errors.Add($"Role '{request.RoleName}' already exists.");
 
             if (errors.Any())
                 return (false, errors, null);
@@ -63,17 +65,11 @@ namespace GodotXR.Application.Services
             await _unitOfWork.RoleRepository.AddAsync(role);
             await _unitOfWork.SaveChangesAsync();
 
-            return (
-                true,
-                Enumerable.Empty<string>(),
-                MapToResponse(role)
+            return (true, Enumerable.Empty<string>(), MapToResponse(role)
             );
         }
 
-        public async Task<(bool Succeeded,
-                   bool NotFound,
-                   IEnumerable<string> Errors,
-                   RoleResponse? Data)> UpdateRoleAsync(int id, UpdateRoleRequest request)
+        public async Task<(bool Succeeded,bool NotFound, IEnumerable<string> Errors, RoleResponse? Data)> UpdateRoleAsync(int id, UpdateRoleRequest request)
         {
             var role = await _unitOfWork.RoleRepository.GetFirstOrDefaultAsync(
                 filter: r => r.Id == id && !r.IsDeleted);
@@ -97,16 +93,11 @@ namespace GodotXR.Application.Services
                          !r.IsDeleted);
 
                 if (exists)
-                    errors.Add($"Role '{request.RoleName}' đã tồn tại.");
+                    errors.Add($"Role '{request.RoleName}' already exists.");
             }
 
             if (errors.Any())
-                return (
-                    false,
-                    false,
-                    errors,
-                    null
-                );
+                return (false, false, errors, null);
 
             if (request.RoleName.HasValue)
                 role.RoleName = request.RoleName.Value;
@@ -122,42 +113,26 @@ namespace GodotXR.Application.Services
             _unitOfWork.RoleRepository.Update(role);
             await _unitOfWork.SaveChangesAsync();
 
-            return (
-                true,
-                false,
-                Enumerable.Empty<string>(),
-                MapToResponse(role)
-            );
+            return (true, false, Enumerable.Empty<string>(), MapToResponse(role));
         }
 
-        public async Task<(bool Succeeded,
-                   bool NotFound,
-                   IEnumerable<string> Errors)> DeleteRoleAsync(int id)
+        public async Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors)> DeleteRoleAsync(int id)
         {
             var role = await _unitOfWork.RoleRepository.GetFirstOrDefaultAsync(
                 r => r.Id == id && !r.IsDeleted);
 
             if (role == null)
-            {
-                return (
-                    false,
-                    true,
-                    Enumerable.Empty<string>()
-                );
-            }
+                return (false, true, Enumerable.Empty<string>());
 
             role.IsDeleted = true;
+            role.IsActive = false;
             role.DeletedAt = DateTime.UtcNow;
             role.UpdatedAt = DateTime.UtcNow;
 
             _unitOfWork.RoleRepository.Update(role);
             await _unitOfWork.SaveChangesAsync();
 
-            return (
-                true,
-                false,
-                Enumerable.Empty<string>()
-            );
+            return (true, false, Enumerable.Empty<string>());
         }
 
         private static RoleResponse MapToResponse(Role role) => new()

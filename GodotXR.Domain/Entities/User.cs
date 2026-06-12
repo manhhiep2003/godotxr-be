@@ -26,7 +26,11 @@ namespace GodotXR.Domain.Entities
         public string Phone { get; set; } = string.Empty;
 
         public bool IsActive { get; set; } = true;
+        [MaxLength(20)]
+        public string Gender { get; set; } = string.Empty;
 
+        [MaxLength(100)]
+        public string Specialty { get; set; } = string.Empty;
         // Foreign Keys
         public int RoleId { get; set; }
 

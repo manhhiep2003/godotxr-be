@@ -54,6 +54,8 @@ namespace GodotXR.Infrastructure
 
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IPasswordHasherService, PasswordHasherService>();
+
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IProgramService, ProgramService>();
