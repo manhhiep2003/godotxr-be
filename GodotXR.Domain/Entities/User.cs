@@ -31,6 +31,11 @@ namespace GodotXR.Domain.Entities
 
         [MaxLength(100)]
         public string Specialty { get; set; } = string.Empty;
+
+        public bool IsEmailVerified { get; set; } = false;
+        public bool MustChangePassword { get; set; } = true;
+        public string? VerifyToken { get; set; }
+        public DateTime? VerifyTokenExpiry { get; set; }
         // Foreign Keys
         public int RoleId { get; set; }
 
