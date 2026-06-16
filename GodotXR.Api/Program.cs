@@ -21,11 +21,12 @@ builder.Services.AddWebServices();
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
+var swaggerEnabled =
+    builder.Configuration.GetValue<bool>("Swagger:Enabled");
+
 var app = builder.Build();
 
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || swaggerEnabled)
 {
     app.UseSwagger();
     app.UseSwaggerUI();
