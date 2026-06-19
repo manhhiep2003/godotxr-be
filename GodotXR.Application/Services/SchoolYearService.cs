@@ -2,7 +2,6 @@
 using GodotXR.Application.DTOs.Request.SchoolYear;
 using GodotXR.Application.DTOs.Response;
 using GodotXR.Application.DTOs.Response.SchoolYear;
-using GodotXR.Application.Services;
 using GodotXR.Domain.Entities;
 using GodotXR.Domain.IUnitOfWork;
 
@@ -27,7 +26,8 @@ namespace GodotXR.Application.Services
                 pageNumber, pageSize,
                 predicate: sy =>
                     !sy.IsDeleted &&
-                    (string.IsNullOrWhiteSpace(status) || sy.Status == status),
+                    (string.IsNullOrWhiteSpace(status) || sy.Status == status) &&
+                    (string.IsNullOrWhiteSpace(search) || sy.YearName.Contains(search)),
                 orderBy: q => q.OrderByDescending(sy => sy.StartDate),
                 includeProperties: "Semesters"
             );
@@ -56,8 +56,18 @@ namespace GodotXR.Application.Services
         public async Task<(bool Succeeded, IEnumerable<string> Errors, SchoolYearResponse? Data)>
             CreateSchoolYearAsync(CreateSchoolYearRequest request)
         {
+            // BR-43: StartDate không được sau EndDate
             if (request.StartDate >= request.EndDate)
                 return (false, new[] { "Start date must be before end date." }, null);
+
+            // Validation: Không được trùng thời gian với SchoolYear khác
+            var hasOverlap = await _unitOfWork.SchoolYearRepository
+                .HasOverlappingAsync(request.StartDate, request.EndDate);
+
+            if (hasOverlap)
+                return (false, new[] { "School year period overlaps with an existing school year." }, null);
+
+            // BR-44: Chỉ 1 Active tại một thời điểm
             if (request.Status == "Active")
             {
                 var hasActive = await _unitOfWork.SchoolYearRepository.HasActiveSchoolYearAsync();
@@ -67,6 +77,7 @@ namespace GodotXR.Application.Services
 
             var schoolYear = new SchoolYear
             {
+                YearName = request.YearName.Trim(),
                 StartDate = request.StartDate,
                 EndDate = request.EndDate,
                 Status = request.Status,
@@ -89,8 +100,19 @@ namespace GodotXR.Application.Services
 
             if (schoolYear == null)
                 return (false, true, Enumerable.Empty<string>(), null);
+
+            // BR-43
             if (request.StartDate >= request.EndDate)
                 return (false, false, new[] { "Start date must be before end date." }, null);
+
+            // Validation: Không được trùng thời gian với SchoolYear khác
+            var hasOverlap = await _unitOfWork.SchoolYearRepository
+                .HasOverlappingAsync(request.StartDate, request.EndDate, excludeId: id);
+
+            if (hasOverlap)
+                return (false, false, new[] { "School year period overlaps with an existing school year." }, null);
+
+            // BR-44
             if (request.Status == "Active" && schoolYear.Status != "Active")
             {
                 var hasActive = await _unitOfWork.SchoolYearRepository.HasActiveSchoolYearAsync(excludeId: id);
@@ -98,6 +120,7 @@ namespace GodotXR.Application.Services
                     return (false, false, new[] { "Another school year is already active." }, null);
             }
 
+            schoolYear.YearName = request.YearName.Trim();
             schoolYear.StartDate = request.StartDate;
             schoolYear.EndDate = request.EndDate;
             schoolYear.Status = request.Status;
@@ -145,6 +168,7 @@ namespace GodotXR.Application.Services
 
             if (schoolYear.Status == "Active")
                 return (false, false, new[] { "This school year is already active." }, null);
+
             var currentActives = await _unitOfWork.SchoolYearRepository
                 .FindAsync(filter: sy => !sy.IsDeleted && sy.Status == "Active");
 

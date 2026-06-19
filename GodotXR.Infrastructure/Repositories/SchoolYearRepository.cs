@@ -21,5 +21,19 @@ namespace GodotXR.Infrastructure.Repositories
 
             return await query.AnyAsync();
         }
+
+        public async Task<bool> HasOverlappingAsync(DateTime startDate, DateTime endDate, int? excludeId = null)
+        {
+            var query = _context.SchoolYears
+                .Where(sy =>
+                    !sy.IsDeleted &&
+                    sy.StartDate < endDate &&
+                    sy.EndDate > startDate);
+
+            if (excludeId.HasValue)
+                query = query.Where(sy => sy.Id != excludeId.Value);
+
+            return await query.AnyAsync();
+        }
     }
 }
