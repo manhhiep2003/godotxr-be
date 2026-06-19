@@ -14,7 +14,8 @@ namespace GodotXR.Api
                     {
                         policy.WithOrigins(
                               "http://localhost:3000",
-                              "https://godotxr-h-tr-ng-n-ng-vr-517269026170.asia-southeast1.run.app"
+                              "https://godotxr-h-tr-ng-n-ng-vr-517269026170.asia-southeast1.run.app",
+                              "https://godotxr-three.vercel.app/"
                           )
                               .AllowAnyHeader()
                               .AllowAnyMethod()
