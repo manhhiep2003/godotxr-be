@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using GodotXR.Application.DTOs.Response.Classroom;
 using GodotXR.Application.DTOs.Response.Lesson;
 using GodotXR.Application.DTOs.Response.Program;
 using GodotXR.Application.DTOs.Response.SchoolYear;
@@ -44,6 +45,24 @@ namespace GodotXR.Infrastructure.Mappings
                     src.SchoolYear.Status))
                 .ForMember(dest => dest.ClassroomCount, opt => opt.MapFrom(src =>
                     src.Classrooms.Count(c => !c.IsDeleted)));
+
+            CreateMap<Classroom, ClassroomResponse>()
+    .ForMember(dest => dest.TeacherName, opt => opt.MapFrom(src =>
+        src.User != null ? src.User.FullName : string.Empty))
+    .ForMember(dest => dest.TeacherSpecialty, opt => opt.MapFrom(src =>
+        src.User != null ? src.User.Specialty : string.Empty))
+    .ForMember(dest => dest.ProgramName, opt => opt.MapFrom(src =>
+        src.Program != null ? src.Program.ProgramName : string.Empty))
+    .ForMember(dest => dest.ProgramLanguage, opt => opt.MapFrom(src =>
+        src.Program != null ? src.Program.Language : string.Empty))
+    .ForMember(dest => dest.TargetAgeFrom, opt => opt.MapFrom(src =>
+        src.Program != null ? src.Program.TargetAgeFrom : 0))
+    .ForMember(dest => dest.TargetAgeTo, opt => opt.MapFrom(src =>
+        src.Program != null ? src.Program.TargetAgeTo : 0))
+    .ForMember(dest => dest.SemesterName, opt => opt.MapFrom(src =>
+        src.Semester != null ? src.Semester.SemesterName : string.Empty))
+    .ForMember(dest => dest.EnrollmentCount, opt => opt.MapFrom(src =>
+        src.Enrollments.Count(e => !e.IsDeleted)));
         }
     }
 }

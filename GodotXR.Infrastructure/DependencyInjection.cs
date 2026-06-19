@@ -62,6 +62,7 @@ namespace GodotXR.Infrastructure
             services.AddScoped<ILessonService, LessonService>();
             services.AddScoped<ISchoolYearService, SchoolYearService>();
             services.AddScoped<ISemesterService, SemesterService>();
+            services.AddScoped<IClassroomService, ClassroomService>();
 
             // AutoMapper
             services.AddAutoMapper(cfg =>

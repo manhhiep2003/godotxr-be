@@ -17,6 +17,7 @@ namespace GodotXR.Infrastructure.UnitOfWork
         private ILessonRepository? _lessonRepository;
         private ISchoolYearRepository? _schoolYearRepository;
         private ISemesterRepository? _semesterRepository;
+        private IClassroomRepository? _classroomRepository;
         public UnitOfWork(AppDbContext context)
         {
             _context = context;
@@ -131,6 +132,14 @@ namespace GodotXR.Infrastructure.UnitOfWork
             {
                 _semesterRepository ??= new SemesterRepository(_context);
                 return _semesterRepository;
+            }
+        }
+        public IClassroomRepository ClassroomRepository
+        {
+            get
+            {
+                _classroomRepository ??= new ClassroomRepository(_context);
+                return _classroomRepository;
             }
         }
     }
