@@ -49,8 +49,8 @@ jobs:
           script: |
             cd /opt/godotxr
             
-            docker-compose pull api
+            docker compose pull api
             
-            docker-compose up -d --no-deps api
+            docker compose up -d --no-deps api
             
             docker image prune -f
