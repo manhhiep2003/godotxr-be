@@ -19,5 +19,7 @@ namespace GodotXR.Domain.Entities
         [MaxLength(50)]
         public string Status { get; set; } = "Active";
         public ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();
+
+        public ICollection<Classroom> Classrooms { get; set; } = new List<Classroom>();
     }
 }
