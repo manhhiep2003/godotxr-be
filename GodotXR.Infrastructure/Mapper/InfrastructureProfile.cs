@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using GodotXR.Application.DTOs.Response.Lesson;
 using GodotXR.Application.DTOs.Response.Program;
+using GodotXR.Application.DTOs.Response.SchoolYear;
 using GodotXR.Domain.Entities;
 using System.Security.Claims;
 
@@ -22,6 +23,9 @@ namespace GodotXR.Infrastructure.Mappings
                     src.Lessons.Where(l => !l.IsDeleted).ToList()));
             CreateMap<Lesson, LessonSummaryResponse>();
             CreateMap<Lesson, LessonResponse>();
+            CreateMap<SchoolYear, SchoolYearResponse>()
+       .ForMember(dest => dest.SemesterCount, opt => opt.MapFrom(src =>
+           src.Semesters.Count(s => !s.IsDeleted)));
         }
     }
 }

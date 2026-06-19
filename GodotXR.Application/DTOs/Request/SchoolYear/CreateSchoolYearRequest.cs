@@ -1,0 +1,17 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace GodotXR.Application.DTOs.Request.SchoolYear
+{
+    public class CreateSchoolYearRequest
+    {
+
+        [Required]
+        public DateTime StartDate { get; set; }
+
+        [Required]
+        public DateTime EndDate { get; set; }
+
+        [Required, MaxLength(50)]
+        public string Status { get; set; } = "Upcoming";
+    }
+}

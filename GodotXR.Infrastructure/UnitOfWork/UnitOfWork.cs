@@ -15,6 +15,7 @@ namespace GodotXR.Infrastructure.UnitOfWork
         private IRoleRepository? _roleRepository;
         private IProgramRepository? _programRepository;
         private ILessonRepository? _lessonRepository;
+        private ISchoolYearRepository? _schoolYearRepository;
 
         public UnitOfWork(AppDbContext context)
         {
@@ -115,6 +116,14 @@ namespace GodotXR.Infrastructure.UnitOfWork
         {
             _transaction?.Dispose();
             GC.SuppressFinalize(this);
+        }
+        public ISchoolYearRepository SchoolYearRepository
+        {
+            get
+            {
+                _schoolYearRepository ??= new SchoolYearRepository(_context);
+                return _schoolYearRepository;
+            }
         }
     }
 }
