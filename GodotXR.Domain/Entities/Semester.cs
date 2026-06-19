@@ -5,6 +5,8 @@ namespace GodotXR.Domain.Entities
 {
     public class Semester : BaseEntity
     {
+        [Required, MaxLength(200)]
+        public string SemesterName { get; set; } = string.Empty;
         public int SchoolYearId { get; set; }
 
         public int TeacherId { get; set; }
