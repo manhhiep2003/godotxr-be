@@ -1,5 +1,7 @@
 using GodotXR.Api;
 using GodotXR.Infrastructure;
+using GodotXR.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,6 +27,12 @@ var swaggerEnabled =
     builder.Configuration.GetValue<bool>("Swagger:Enabled");
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
 
 if (app.Environment.IsDevelopment() || swaggerEnabled)
 {
