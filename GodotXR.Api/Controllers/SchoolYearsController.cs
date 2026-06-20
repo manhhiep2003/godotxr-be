@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace GodotXR.Api.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/school-years")]
     [Authorize(Roles = "Admin")]   
     public class SchoolYearsController : ControllerBase
     {

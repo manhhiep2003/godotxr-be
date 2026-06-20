@@ -18,6 +18,8 @@ namespace GodotXR.Infrastructure.UnitOfWork
         private ISchoolYearRepository? _schoolYearRepository;
         private ISemesterRepository? _semesterRepository;
         private IClassroomRepository? _classroomRepository;
+        private IChildProfileRepository? _childProfileRepository;
+
         public UnitOfWork(AppDbContext context)
         {
             _context = context;
@@ -56,6 +58,40 @@ namespace GodotXR.Infrastructure.UnitOfWork
             {
                 _lessonRepository ??= new LessonRepository(_context);
                 return _lessonRepository;
+            }
+        }
+
+        public ISchoolYearRepository SchoolYearRepository
+        {
+            get
+            {
+                _schoolYearRepository ??= new SchoolYearRepository(_context);
+                return _schoolYearRepository;
+            }
+        }
+        public ISemesterRepository SemesterRepository
+        {
+            get
+            {
+                _semesterRepository ??= new SemesterRepository(_context);
+                return _semesterRepository;
+            }
+        }
+        public IClassroomRepository ClassroomRepository
+        {
+            get
+            {
+                _classroomRepository ??= new ClassroomRepository(_context);
+                return _classroomRepository;
+            }
+        }
+
+        public IChildProfileRepository ChildProfileRepository
+        {
+            get
+            {
+                _childProfileRepository ??= new ChildProfileRepository(_context);
+                return _childProfileRepository;
             }
         }
 
@@ -117,30 +153,6 @@ namespace GodotXR.Infrastructure.UnitOfWork
         {
             _transaction?.Dispose();
             GC.SuppressFinalize(this);
-        }
-        public ISchoolYearRepository SchoolYearRepository
-        {
-            get
-            {
-                _schoolYearRepository ??= new SchoolYearRepository(_context);
-                return _schoolYearRepository;
-            }
-        }
-        public ISemesterRepository SemesterRepository
-        {
-            get
-            {
-                _semesterRepository ??= new SemesterRepository(_context);
-                return _semesterRepository;
-            }
-        }
-        public IClassroomRepository ClassroomRepository
-        {
-            get
-            {
-                _classroomRepository ??= new ClassroomRepository(_context);
-                return _classroomRepository;
-            }
         }
     }
 }
