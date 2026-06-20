@@ -19,7 +19,7 @@ namespace GodotXR.Infrastructure.UnitOfWork
         private ISemesterRepository? _semesterRepository;
         private IClassroomRepository? _classroomRepository;
         private IChildProfileRepository? _childProfileRepository;
-
+        private IEnrollmentRepository? _enrollmentRepository;
         public UnitOfWork(AppDbContext context)
         {
             _context = context;
@@ -153,6 +153,14 @@ namespace GodotXR.Infrastructure.UnitOfWork
         {
             _transaction?.Dispose();
             GC.SuppressFinalize(this);
+        }
+        public IEnrollmentRepository EnrollmentRepository
+        {
+            get
+            {
+                _enrollmentRepository ??= new EnrollmentRepository(_context);
+                return _enrollmentRepository;
+            }
         }
     }
 }
