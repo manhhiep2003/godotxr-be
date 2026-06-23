@@ -1,4 +1,5 @@
 ﻿using GodotXR.Api.Contracts;
+using GodotXR.Application.DTOs.Request.ChildProfile;
 using GodotXR.Application.DTOs.Response;
 using GodotXR.Application.DTOs.Response.ChildProfile;
 using GodotXR.Application.Services;
@@ -61,6 +62,32 @@ namespace GodotXR.Api.Controllers
             {
                 Success = true,
                 Message = "OK",
+                Data = data
+            });
+        }
+
+        [HttpPost]
+        [ProducesResponseType(typeof(ApiResponse<ChildProfileResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<ChildProfileResponse>), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> Create(
+            [FromBody] CreateChildProfileRequest request)
+        {
+            var (ok, errors, data) = await _childProfileService.CreateChildProfileAsync(request);
+
+            if (!ok)
+            {
+                return BadRequest(new ApiResponse<ChildProfileResponse>
+                {
+                    Success = false,
+                    Message = "Create child profile failed.",
+                    Errors = errors.ToList()
+                });
+            }
+
+            return Ok(new ApiResponse<ChildProfileResponse>
+            {
+                Success = true,
+                Message = "Child profile created.",
                 Data = data
             });
         }
