@@ -10,7 +10,7 @@ namespace GodotXR.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin,Teacher")]  
+    [Authorize(Roles = "Admin,Teacher")]
     public class ClassroomsController : ControllerBase
     {
         private readonly IClassroomService _classroomService;
@@ -19,18 +19,12 @@ namespace GodotXR.Api.Controllers
         {
             _classroomService = classroomService;
         }
+
         [HttpGet]
         [ProducesResponseType(typeof(ApiResponse<PagedResponse<ClassroomResponse>>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> Get(
-            [FromQuery] PaginationQuery query,
-            [FromQuery] int? semesterId = null,
-            [FromQuery] int? programId = null,
-            [FromQuery] int? userId = null,
-            [FromQuery] string? status = null)
+        public async Task<IActionResult> Get([FromQuery] PaginationQuery query)
         {
-            var data = await _classroomService.GetListClassroomAsync(
-                query.PageNumber, query.PageSize,
-                semesterId, programId, userId, status);
+            var data = await _classroomService.GetListClassroomAsync(query.PageNumber, query.PageSize);
 
             return Ok(new ApiResponse<PagedResponse<ClassroomResponse>>
             {
@@ -39,6 +33,7 @@ namespace GodotXR.Api.Controllers
                 Data = data
             });
         }
+
         [HttpGet("{id:int}")]
         [ProducesResponseType(typeof(ApiResponse<ClassroomResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -67,6 +62,7 @@ namespace GodotXR.Api.Controllers
                 Data = data
             });
         }
+
         [HttpPost]
         [Authorize(Roles = "Admin")]
         [ProducesResponseType(typeof(ApiResponse<ClassroomResponse>), StatusCodes.Status200OK)]
@@ -90,6 +86,7 @@ namespace GodotXR.Api.Controllers
                 Data = data
             });
         }
+
         [HttpPut("{id:int}")]
         [Authorize(Roles = "Admin")]
         [ProducesResponseType(typeof(ApiResponse<ClassroomResponse>), StatusCodes.Status200OK)]
@@ -128,6 +125,7 @@ namespace GodotXR.Api.Controllers
                 Data = data
             });
         }
+
         [HttpDelete("{id:int}")]
         [Authorize(Roles = "Admin")]
         [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]

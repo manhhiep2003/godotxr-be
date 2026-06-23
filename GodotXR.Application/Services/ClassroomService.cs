@@ -19,19 +19,11 @@ namespace GodotXR.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<PagedResponse<ClassroomResponse>> GetListClassroomAsync(
-            int pageNumber, int pageSize,
-            int? semesterId = null, int? programId = null,
-            int? userId = null, string? status = null)
+        public async Task<PagedResponse<ClassroomResponse>> GetListClassroomAsync(int pageNumber, int pageSize)
         {
             var paged = await _unitOfWork.ClassroomRepository.GetPagedAsync(
                 pageNumber, pageSize,
-                predicate: c =>
-                    !c.IsDeleted &&
-                    (!semesterId.HasValue || c.SemesterId == semesterId.Value) &&
-                    (!programId.HasValue || c.ProgramId == programId.Value) &&
-                    (!userId.HasValue || c.UserId == userId.Value) &&
-                    (string.IsNullOrWhiteSpace(status) || c.Status == status),
+                predicate: c => !c.IsDeleted,
                 orderBy: q => q.OrderByDescending(c => c.StartDate),
                 includeProperties: "User,User.Role,Program,Semester,Enrollments"
             );
