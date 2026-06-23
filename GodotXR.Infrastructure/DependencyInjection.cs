@@ -1,4 +1,5 @@
-﻿using GodotXR.Application.Services;
+﻿using GodotXR.Application.Mapper;
+using GodotXR.Application.Services;
 using GodotXR.Domain.IRepositories;
 using GodotXR.Domain.IUnitOfWork;
 using GodotXR.Infrastructure.Configurations;
@@ -63,11 +64,13 @@ namespace GodotXR.Infrastructure
             services.AddScoped<ISchoolYearService, SchoolYearService>();
             services.AddScoped<ISemesterService, SemesterService>();
             services.AddScoped<IClassroomService, ClassroomService>();
-
+            services.AddScoped<IChildProfileService, ChildProfileService>();
+            services.AddScoped<IEnrollmentService, EnrollmentService>();
             // AutoMapper
             services.AddAutoMapper(cfg =>
             {
                 cfg.AddMaps(typeof(InfrastructureProfile).Assembly);
+                cfg.AddMaps(typeof(ApplicationProfile).Assembly);
             });
 
             // Email

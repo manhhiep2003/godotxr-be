@@ -28,13 +28,13 @@ namespace GodotXR.Infrastructure.Repositories
         }
 
         public async Task<PagedResult<T>> GetPagedAsync(
-      int pageNumber,
-      int pageSize,
-      Expression<Func<T, bool>>? predicate = null,
-      Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
-      bool asNoTracking = true,
-      string includeProperties = "",
-      CancellationToken cancellationToken = default)
+          int pageNumber,
+          int pageSize,
+          Expression<Func<T, bool>>? predicate = null,
+          Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
+          bool asNoTracking = true,
+          string includeProperties = "",
+          CancellationToken cancellationToken = default)
         {
             var normalizedPageNumber = pageNumber < 1 ? 1 : pageNumber;
             var normalizedPageSize = pageSize < 1 ? 10 : pageSize;

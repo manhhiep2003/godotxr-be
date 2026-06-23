@@ -11,10 +11,19 @@ namespace GodotXR.Domain.IUnitOfWork
         IProgramRepository ProgramRepository { get; }
 
         ILessonRepository LessonRepository { get; }
-        // Generic repository method (for other entities if needed)
+
         ISchoolYearRepository SchoolYearRepository { get; }
+
         ISemesterRepository SemesterRepository { get; }
+
         IClassroomRepository ClassroomRepository { get; }
+
+        IChildProfileRepository ChildProfileRepository { get; }
+
+        IEnrollmentRepository EnrollmentRepository { get; }
+
+        // Generic repository method (for other entities if needed)
+
         IGenericRepository<T> Repository<T>() where T : class;
 
         Task<int> SaveChangesAsync();
