@@ -22,6 +22,9 @@ namespace GodotXR.Domain.IUnitOfWork
 
         IEnrollmentRepository EnrollmentRepository { get; }
 
+        IExerciseTypeRepository ExerciseTypeRepository { get; }
+        IExerciseRepository ExerciseRepository { get; }
+        IExerciseQuestionRepository ExerciseQuestionRepository { get; }
         // Generic repository method (for other entities if needed)
 
         IGenericRepository<T> Repository<T>() where T : class;

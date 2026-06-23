@@ -20,6 +20,10 @@ namespace GodotXR.Infrastructure.UnitOfWork
         private IClassroomRepository? _classroomRepository;
         private IChildProfileRepository? _childProfileRepository;
         private IEnrollmentRepository? _enrollmentRepository;
+        private IExerciseTypeRepository? _exerciseTypeRepository;
+        private IExerciseRepository? _exerciseRepository;
+        private IExerciseQuestionRepository? _exerciseQuestionRepository;
+
         public UnitOfWork(AppDbContext context)
         {
             _context = context;
@@ -161,6 +165,18 @@ namespace GodotXR.Infrastructure.UnitOfWork
                 _enrollmentRepository ??= new EnrollmentRepository(_context);
                 return _enrollmentRepository;
             }
+        }
+        public IExerciseTypeRepository ExerciseTypeRepository
+        {
+            get { _exerciseTypeRepository ??= new ExerciseTypeRepository(_context); return _exerciseTypeRepository; }
+        }
+        public IExerciseRepository ExerciseRepository
+        {
+            get { _exerciseRepository ??= new ExerciseRepository(_context); return _exerciseRepository; }
+        }
+        public IExerciseQuestionRepository ExerciseQuestionRepository
+        {
+            get { _exerciseQuestionRepository ??= new ExerciseQuestionRepository(_context); return _exerciseQuestionRepository; }
         }
     }
 }
