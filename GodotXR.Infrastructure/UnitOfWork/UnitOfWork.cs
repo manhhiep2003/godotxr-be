@@ -23,7 +23,9 @@ namespace GodotXR.Infrastructure.UnitOfWork
         private IExerciseTypeRepository? _exerciseTypeRepository;
         private IExerciseRepository? _exerciseRepository;
         private IExerciseQuestionRepository? _exerciseQuestionRepository;
-
+        private IResultRepository? _resultRepository;
+        private IPronunciationDetailRepository? _pronunciationDetailRepository;
+        private IEventLogRepository? _eventLogRepository;
         public UnitOfWork(AppDbContext context)
         {
             _context = context;
@@ -177,6 +179,18 @@ namespace GodotXR.Infrastructure.UnitOfWork
         public IExerciseQuestionRepository ExerciseQuestionRepository
         {
             get { _exerciseQuestionRepository ??= new ExerciseQuestionRepository(_context); return _exerciseQuestionRepository; }
+        }
+        public IResultRepository ResultRepository
+        {
+            get { _resultRepository ??= new ResultRepository(_context); return _resultRepository; }
+        }
+        public IPronunciationDetailRepository PronunciationDetailRepository
+        {
+            get { _pronunciationDetailRepository ??= new PronunciationDetailRepository(_context); return _pronunciationDetailRepository; }
+        }
+        public IEventLogRepository EventLogRepository
+        {
+            get { _eventLogRepository ??= new EventLogRepository(_context); return _eventLogRepository; }
         }
     }
 }

@@ -1,0 +1,144 @@
+﻿using GodotXR.Application.DTOs.Request.Result;
+using GodotXR.Application.DTOs.Response;
+using GodotXR.Application.DTOs.Response.Result;
+using GodotXR.Application.Services;
+using GodotXR.Domain.IUnitOfWork;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+
+namespace GodotXR.Api.Controllers
+{
+    [ApiController]
+    [Route("api/results")]
+    [Authorize]
+    public class ResultsController : ControllerBase
+    {
+        private readonly IResultService _service;
+        private readonly IUnitOfWork _uow;
+
+        public ResultsController(IResultService service, IUnitOfWork uow)
+        {
+            _service = service;
+            _uow = uow;
+        }
+
+        [HttpPost("submit")]
+        [Authorize(Roles = "Child")]
+        public async Task<IActionResult> Submit([FromBody] SubmitResultRequest request)
+        {
+            var (succeeded, notFound, errors, data) = await _service.SubmitAsync(request);
+
+            if (notFound)
+                return NotFound(new ApiResponse<ResultResponse>
+                {
+                    Success = false,
+                    Message = "Not found.",
+                    Errors = errors.ToList()
+                });
+            if (!succeeded)
+                return BadRequest(new ApiResponse<ResultResponse>
+                {
+                    Success = false,
+                    Message = "Submit failed.",
+                    Errors = errors.ToList()
+                });
+
+            return Ok(new ApiResponse<ResultResponse>
+            {
+                Success = true,
+                Message = "Result submitted successfully.",
+                Data = data
+            });
+        }
+
+        [HttpGet("{id}")]
+        [Authorize(Roles = "Admin,Teacher,Parent")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var currentRole = User.FindFirst(ClaimTypes.Role)!.Value;
+
+            var resultResponse = await _service.GetByIdAsync(id);
+            if (!resultResponse.Success)
+                return NotFound(resultResponse);
+
+            var data = resultResponse.Data!;
+
+            if (currentRole == "Parent")
+            {
+                var child = await _uow.ChildProfileRepository.GetByIdAsync(data.ChildId);
+                if (child == null || child.UserId != currentUserId)
+                    return Forbid();
+            }
+
+            if (currentRole == "Teacher")
+            {
+                var hasAccess = await _uow.EnrollmentRepository
+                    .HasTeacherAccessToChildAsync(currentUserId, data.ChildId);
+                if (!hasAccess)
+                    return Forbid();
+            }
+
+            return Ok(resultResponse);
+        }
+
+        [HttpGet("by-child/{childId}")]
+        [Authorize(Roles = "Admin,Teacher,Parent")]
+        public async Task<IActionResult> GetByChild(int childId)
+        {
+            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var currentRole = User.FindFirst(ClaimTypes.Role)!.Value;
+
+            if (currentRole == "Parent")
+            {
+                var child = await _uow.ChildProfileRepository.GetByIdAsync(childId);
+                if (child == null || child.UserId != currentUserId)
+                    return Forbid();
+            }
+
+            if (currentRole == "Teacher")
+            {
+                var hasAccess = await _uow.EnrollmentRepository
+                    .HasTeacherAccessToChildAsync(currentUserId, childId);
+                if (!hasAccess)
+                    return Forbid();
+            }
+
+            var result = await _service.GetByChildIdAsync(childId);
+            if (!result.Success)
+                return NotFound(result);
+            return Ok(result);
+        }
+
+        [HttpGet("by-exercise/{exerciseId}")]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> GetByExercise(int exerciseId)
+        {
+            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var currentRole = User.FindFirst(ClaimTypes.Role)!.Value;
+
+            if (currentRole == "Teacher")
+            {
+                var exercise = await _uow.ExerciseRepository.GetByIdAsync(exerciseId);
+                if (exercise == null || exercise.TeacherId != currentUserId)
+                    return Forbid();
+            }
+
+            var result = await _service.GetByExerciseIdAsync(exerciseId);
+            if (!result.Success)
+                return NotFound(result);
+            return Ok(result);
+        }
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult Delete(int id)
+        {
+            return BadRequest(new ApiResponse
+            {
+                Success = false,
+                Message = "Finalized results cannot be permanently deleted." 
+            });
+        }
+    }
+}

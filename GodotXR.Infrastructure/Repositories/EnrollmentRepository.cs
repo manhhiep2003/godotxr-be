@@ -36,5 +36,24 @@ namespace GodotXR.Infrastructure.Repositories
                             && !e.IsDeleted
                             && (excludeId == null || e.Id != excludeId));
         }
+
+        // BR-76
+        public async Task<IEnumerable<Enrollment>> GetByChildIdAsync(int childId)
+        {
+            return await _context.Enrollments
+                .Where(e => e.ChildId == childId && !e.IsDeleted)
+                .ToListAsync();
+        }
+
+        // BR-94: Teacher chỉ xem Child trong Classroom mình quản lý
+        public async Task<bool> HasTeacherAccessToChildAsync(int teacherId, int childId)
+        {
+            return await _context.Enrollments
+                .Include(e => e.Classroom)
+                .AnyAsync(e => e.ChildId == childId
+                            && e.Classroom.UserId == teacherId  
+                            && e.Status == "Active"
+                            && !e.IsDeleted);
+        }
     }
 }

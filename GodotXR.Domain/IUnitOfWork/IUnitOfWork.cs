@@ -26,7 +26,9 @@ namespace GodotXR.Domain.IUnitOfWork
         IExerciseRepository ExerciseRepository { get; }
         IExerciseQuestionRepository ExerciseQuestionRepository { get; }
         // Generic repository method (for other entities if needed)
-
+        IResultRepository ResultRepository { get; }                       
+        IPronunciationDetailRepository PronunciationDetailRepository { get; } 
+        IEventLogRepository EventLogRepository { get; }                       
         IGenericRepository<T> Repository<T>() where T : class;
 
         Task<int> SaveChangesAsync();
