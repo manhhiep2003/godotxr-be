@@ -173,7 +173,7 @@ namespace GodotXR.Api.Controllers
         {
             if (id <= 0)
             {
-                return BadRequest(new ApiResponse<UserResponse>
+                return BadRequest(new ApiResponse<bool>
                 {
                     Success = false,
                     Message = "Invalid lesson id."

@@ -76,5 +76,109 @@ namespace GodotXR.Application.Services
 
             return (true, Enumerable.Empty<string>(), response);
         }
+
+        public async Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors, ChildProfileResponse? Data)>
+            UpdateChildProfileAsync(int id, UpdateChildProfileRequest request)
+        {
+            var errors = new List<string>();
+
+            var childProfile = await _unitOfWork.ChildProfileRepository
+                .GetFirstOrDefaultAsync(
+                    c => c.Id == id && !c.IsDeleted);
+
+            if (childProfile == null)
+            {
+                errors.Add("Child profile not found.");
+                return (false, true, errors, null);
+            }
+
+            if (request.UserId.HasValue)
+            {
+                var user = await _unitOfWork.UserRepository.GetFirstOrDefaultAsync(
+                    u => u.Id == request.UserId.Value
+                         && !u.IsDeleted
+                         && u.IsActive,
+                    tracked: false);
+
+                if (user == null)
+                {
+                    errors.Add("User does not exist.");
+                    return (false, false, errors, null);
+                }
+
+                childProfile.UserId = request.UserId.Value;
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.FullName))
+                childProfile.FullName = request.FullName;
+
+            if (request.Age.HasValue)
+                childProfile.Age = request.Age.Value;
+
+            if (!string.IsNullOrWhiteSpace(request.Gender))
+                childProfile.Gender = request.Gender;
+
+            if (!string.IsNullOrWhiteSpace(request.LearningLevel))
+                childProfile.LearningLevel = request.LearningLevel;
+
+            if (request.Note != null)
+                childProfile.Note = request.Note;
+
+            if (!string.IsNullOrWhiteSpace(request.Status))
+                childProfile.Status = request.Status;
+
+            _unitOfWork.ChildProfileRepository.Update(childProfile);
+
+            var result = await _unitOfWork.SaveChangesAsync();
+
+            if (result <= 0)
+            {
+                errors.Add("Failed to update child profile.");
+                return (false, false, errors, null);
+            }
+
+            var response = _mapper.Map<ChildProfileResponse>(childProfile);
+
+            return (true, false, Enumerable.Empty<string>(), response);
+        }
+
+        public async Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors)> DeleteChildProfileAsync(int id)
+        {
+            var childProfile = await _unitOfWork.ChildProfileRepository
+                .GetFirstOrDefaultAsync(
+                    c => c.Id == id && !c.IsDeleted);
+
+            if (childProfile == null)
+            {
+                return (
+                    Succeeded: false,
+                    NotFound: true,
+                    Errors: ["Child profile not found."]
+                );
+            }
+
+            childProfile.IsDeleted = true;
+            childProfile.DeletedAt = DateTime.UtcNow;
+            childProfile.UpdatedAt = DateTime.UtcNow;
+
+            _unitOfWork.ChildProfileRepository.Update(childProfile);
+
+            var result = await _unitOfWork.SaveChangesAsync();
+
+            if (result <= 0)
+            {
+                return (
+                    Succeeded: false,
+                    NotFound: false,
+                    Errors: ["Failed to delete child profile."]
+                );
+            }
+
+            return (
+                Succeeded: true,
+                NotFound: false,
+                Errors: Enumerable.Empty<string>()
+            );
+        }
     }
 }

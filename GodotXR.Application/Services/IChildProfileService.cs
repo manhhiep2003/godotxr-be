@@ -12,5 +12,11 @@ namespace GodotXR.Application.Services
 
         Task<(bool Succeeded, IEnumerable<string> Errors, ChildProfileResponse? Data)>
             CreateChildProfileAsync(CreateChildProfileRequest request);
+
+        Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors, ChildProfileResponse? Data)>
+            UpdateChildProfileAsync(int id, UpdateChildProfileRequest request);
+
+        Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors)>
+            DeleteChildProfileAsync(int id);
     }
 }
