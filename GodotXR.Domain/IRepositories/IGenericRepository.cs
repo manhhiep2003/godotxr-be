@@ -6,6 +6,7 @@ namespace GodotXR.Domain.IRepositories
     public interface IGenericRepository<T> where T : class
     {
         Task<T?> GetByIdAsync(object id);
+
         Task<IEnumerable<T>> GetAllAsync();
 
         Task<PagedResult<T>> GetPagedAsync(
@@ -29,14 +30,17 @@ namespace GodotXR.Domain.IRepositories
             bool tracked = true);
 
         Task AddAsync(T entity);
+
         Task AddRangeAsync(IEnumerable<T> entities);
 
         void Update(T entity);
 
         void Remove(T entity);
+
         void RemoveRange(IEnumerable<T> entities);
 
         Task<bool> ExistsAsync(Expression<Func<T, bool>> filter);
+
         Task<int> CountAsync(Expression<Func<T, bool>>? filter = null);
     }
 }

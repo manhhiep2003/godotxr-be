@@ -1,4 +1,5 @@
-﻿using GodotXR.Application.DTOs.Request.User;
+﻿using AutoMapper;
+using GodotXR.Application.DTOs.Request.User;
 using GodotXR.Application.DTOs.Response;
 using GodotXR.Application.DTOs.Response.User;
 using GodotXR.Domain.Entities;
@@ -11,16 +12,19 @@ namespace GodotXR.Application.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMailService _mailService;
-        private readonly IConfiguration _configuration; 
+        private readonly IConfiguration _configuration;
+        private readonly IMapper _mapper;
 
         public UserService(
             IUnitOfWork unitOfWork,
             IMailService mailService,
-            IConfiguration configuration) 
+            IConfiguration configuration,
+            IMapper mapper) 
         {
             _unitOfWork = unitOfWork;
             _mailService = mailService;
-            _configuration = configuration; 
+            _configuration = configuration;
+            _mapper = mapper;
         }
 
         public async Task<PagedResponse<UserResponse>> GetListUserAsync(int pageNumber, int pageSize)
@@ -260,6 +264,31 @@ namespace GodotXR.Application.Services
             return (true, false, Enumerable.Empty<string>());
         }
 
+        public async Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors, UserWithChildrenProfileResponse? Data)>
+            GetCurrentUserWithChildrenProfilesAsync(int userId)
+        {
+            var user = await _unitOfWork.UserRepository.GetByIdWithChildProfilesAsync(userId);
+
+            if (user is null)
+            {
+                return (
+                    Succeeded: false,
+                    NotFound: true,
+                    Errors: ["User not found."],
+                    Data: null
+                );
+            }
+
+            var response = _mapper.Map<UserWithChildrenProfileResponse>(user);
+
+            return (
+                Succeeded: true,
+                NotFound: false,
+                Errors: Enumerable.Empty<string>(),
+                Data: response
+            );
+        }
+
         private static UserResponse MapToResponse(User user) => new()
         {
             Id = user.Id,
@@ -310,53 +339,53 @@ namespace GodotXR.Application.Services
             string verifyLink)
         {
             return $@"
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset='utf-8'>
-    <style>
-        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-        .header {{ background-color: #007bff; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }}
-        .content {{ background-color: #f9f9f9; padding: 20px; border: 1px solid #ddd; border-radius: 0 0 5px 5px; }}
-        .credentials {{ background-color: #fff; padding: 15px; border-left: 4px solid #28a745; margin: 20px 0; }}
-        .credentials p {{ margin: 8px 0; }}
-        .verify-button {{ display: inline-block; padding: 12px 30px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }}
-        .footer {{ color: #666; font-size: 12px; text-align: center; margin-top: 20px; }}
-    </style>
-</head>
-<body>
-    <div class='container'>
-        <div class='header'>
-            <h1>Chào mừng đến GodotXR!</h1>
-        </div>
-        <div class='content'>
-            <p>Xin chào <strong>{fullName}</strong>,</p>
-            <p>Tài khoản của bạn đã được tạo thành công. Dưới đây là thông tin đăng nhập của bạn:</p>
-            <div class='credentials'>
-                <p><strong>Tài khoản:</strong> {username}</p>
-                <p><strong>Mật khẩu tạm thời:</strong> {temporaryPassword}</p>
-            </div>
-            <p><strong>Lưu ý quan trọng:</strong></p>
-            <ul>
-                <li>Hãy đổi mật khẩu tạm thời sau khi đăng nhập lần đầu tiên</li>
-                <li>Mật khẩu của bạn là bí mật - không chia sẻ với bất kỳ ai</li>
-                <li>Mật khẩu tạm thời này sẽ hết hạn sau 24 giờ</li>
-            </ul>
-            <p>Bước tiếp theo, vui lòng xác minh email của bạn bằng cách nhấp vào nút dưới đây:</p>
-            <a href='{verifyLink}' class='verify-button'>Xác Minh Email</a>
-            <p>Hoặc sao chép và dán liên kết này vào trình duyệt:</p>
-            <p><small>{verifyLink}</small></p>
-            <p>Liên kết xác minh này sẽ hết hạn sau 24 giờ.</p>
-            <p>Nếu bạn không tạo tài khoản này, vui lòng bỏ qua email này.</p>
-            <p>Trân trọng,<br><strong>Đội ngũ GodotXR</strong></p>
-        </div>
-        <div class='footer'>
-            <p>&copy; 2026 GodotXR. Tất cả các quyền được bảo lưu.</p>
-        </div>
-    </div>
-</body>
-</html>";
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset='utf-8'>
+                    <style>
+                        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                        .header {{ background-color: #007bff; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }}
+                        .content {{ background-color: #f9f9f9; padding: 20px; border: 1px solid #ddd; border-radius: 0 0 5px 5px; }}
+                        .credentials {{ background-color: #fff; padding: 15px; border-left: 4px solid #28a745; margin: 20px 0; }}
+                        .credentials p {{ margin: 8px 0; }}
+                        .verify-button {{ display: inline-block; padding: 12px 30px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }}
+                        .footer {{ color: #666; font-size: 12px; text-align: center; margin-top: 20px; }}
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <div class='header'>
+                            <h1>Chào mừng đến GodotXR!</h1>
+                        </div>
+                        <div class='content'>
+                            <p>Xin chào <strong>{fullName}</strong>,</p>
+                            <p>Tài khoản của bạn đã được tạo thành công. Dưới đây là thông tin đăng nhập của bạn:</p>
+                            <div class='credentials'>
+                                <p><strong>Tài khoản:</strong> {username}</p>
+                                <p><strong>Mật khẩu tạm thời:</strong> {temporaryPassword}</p>
+                            </div>
+                            <p><strong>Lưu ý quan trọng:</strong></p>
+                            <ul>
+                                <li>Hãy đổi mật khẩu tạm thời sau khi đăng nhập lần đầu tiên</li>
+                                <li>Mật khẩu của bạn là bí mật - không chia sẻ với bất kỳ ai</li>
+                                <li>Mật khẩu tạm thời này sẽ hết hạn sau 24 giờ</li>
+                            </ul>
+                            <p>Bước tiếp theo, vui lòng xác minh email của bạn bằng cách nhấp vào nút dưới đây:</p>
+                            <a href='{verifyLink}' class='verify-button'>Xác Minh Email</a>
+                            <p>Hoặc sao chép và dán liên kết này vào trình duyệt:</p>
+                            <p><small>{verifyLink}</small></p>
+                            <p>Liên kết xác minh này sẽ hết hạn sau 24 giờ.</p>
+                            <p>Nếu bạn không tạo tài khoản này, vui lòng bỏ qua email này.</p>
+                            <p>Trân trọng,<br><strong>Đội ngũ GodotXR</strong></p>
+                        </div>
+                        <div class='footer'>
+                            <p>&copy; 2026 GodotXR. Tất cả các quyền được bảo lưu.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>";
         }
     }
 }

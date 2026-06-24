@@ -10,6 +10,7 @@ using GodotXR.Application.DTOs.Response.Lesson;
 using GodotXR.Application.DTOs.Response.Program;
 using GodotXR.Application.DTOs.Response.SchoolYear;
 using GodotXR.Application.DTOs.Response.Semester;
+using GodotXR.Application.DTOs.Response.User;
 using GodotXR.Domain.Entities;
 namespace GodotXR.Application.Mapper
 {
@@ -17,6 +18,10 @@ namespace GodotXR.Application.Mapper
     {
         public ApplicationProfile()
         {
+            CreateMap<User, UserResponse>();
+
+            CreateMap<User, UserWithChildrenProfileResponse>();
+
             CreateMap<Program, ProgramResponse>()
                .ForMember(dest => dest.Lessons, opt => opt.MapFrom(src =>
                    src.Lessons.Where(l => !l.IsDeleted).ToList()));
@@ -77,6 +82,7 @@ namespace GodotXR.Application.Mapper
                     src.Teacher != null ? src.Teacher.FullName : string.Empty));
 
             CreateMap<CreateChildProfileRequest, ChildProfile>();
+
             CreateMap<ChildProfile, ChildProfileResponse>();
 
             CreateMap<ExerciseType, ExerciseTypeResponse>();

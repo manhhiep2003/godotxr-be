@@ -1,4 +1,5 @@
 ﻿using GodotXR.Api.Contracts;
+using GodotXR.Api.Extensions;
 using GodotXR.Application.DTOs.Request.User;
 using GodotXR.Application.DTOs.Response;
 using GodotXR.Application.DTOs.Response.User;
@@ -57,7 +58,6 @@ namespace GodotXR.Api.Controllers
             return Ok(new ApiResponse<UserResponse> { Success = true, Message = "User created.", Data = data });
         }
 
-        // ✅ Endpoint mới
         [HttpPost("create-account")]
         [Authorize(Roles = "Admin,Teacher")]
         public async Task<ActionResult> CreateAccount([FromBody] CreateAccountRequest request)
@@ -116,6 +116,44 @@ namespace GodotXR.Api.Controllers
                 return BadRequest(new ApiResponse<bool> { Success = false, Message = "Delete user failed.", Errors = errors.ToList(), Data = false });
 
             return Ok(new ApiResponse<bool> { Success = true, Message = "User deleted.", Data = true });
+        }
+
+        [Authorize]
+        [HttpGet("children-profiles")]
+        [ProducesResponseType(typeof(ApiResponse<UserWithChildrenProfileResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<UserWithChildrenProfileResponse>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponse<UserWithChildrenProfileResponse>), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult> GetCurrentUserWithChildrenProfiles()
+        {
+            var userId = User.GetUserId();
+
+            var (succeeded, notFound, errors, data) =
+                await _userService.GetCurrentUserWithChildrenProfilesAsync(userId);
+
+            if (notFound)
+            {
+                return NotFound(new ApiResponse<UserWithChildrenProfileResponse>
+                {
+                    Success = false,
+                    Message = "User not found."
+                });
+            }
+
+            if (!succeeded)
+            {
+                return BadRequest(new ApiResponse<UserWithChildrenProfileResponse>
+                {
+                    Success = false,
+                    Errors = errors.ToList()
+                });
+            }
+
+            return Ok(new ApiResponse<UserWithChildrenProfileResponse>
+            {
+                Success = true,
+                Message = "OK",
+                Data = data
+            });
         }
     }
 }
