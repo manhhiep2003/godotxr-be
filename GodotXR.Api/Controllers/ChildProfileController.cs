@@ -1,4 +1,5 @@
 ﻿using GodotXR.Api.Contracts;
+using GodotXR.Application.DTOs.Request.ChildProfile;
 using GodotXR.Application.DTOs.Response;
 using GodotXR.Application.DTOs.Response.ChildProfile;
 using GodotXR.Application.Services;
@@ -39,7 +40,7 @@ namespace GodotXR.Api.Controllers
         [ProducesResponseType(typeof(ApiResponse<ChildProfileResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<ChildProfileResponse>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<ActionResult> GetById(int id)
         {
             if (id <= 0)
                 return BadRequest(new ApiResponse<ChildProfileResponse>
@@ -62,6 +63,116 @@ namespace GodotXR.Api.Controllers
                 Success = true,
                 Message = "OK",
                 Data = data
+            });
+        }
+
+        [HttpPost]
+        [ProducesResponseType(typeof(ApiResponse<ChildProfileResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<ChildProfileResponse>), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult> Create(
+            [FromBody] CreateChildProfileRequest request)
+        {
+            var (ok, errors, data) = await _childProfileService.CreateChildProfileAsync(request);
+
+            if (!ok)
+            {
+                return BadRequest(new ApiResponse<ChildProfileResponse>
+                {
+                    Success = false,
+                    Message = "Create child profile failed.",
+                    Errors = errors.ToList()
+                });
+            }
+
+            return Ok(new ApiResponse<ChildProfileResponse>
+            {
+                Success = true,
+                Message = "Child profile created.",
+                Data = data
+            });
+        }
+
+        [HttpPut("{id:int}")]
+        [ProducesResponseType(typeof(ApiResponse<ChildProfileResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<ChildProfileResponse>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<ChildProfileResponse>), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> Update(int id, [FromBody] UpdateChildProfileRequest request)
+        {
+            if (id <= 0)
+                return BadRequest(new ApiResponse<ChildProfileResponse>
+                {
+                    Success = false,
+                    Message = "Invalid child profile id."
+                });
+
+            var (ok, notFound, errors, data) = await _childProfileService.UpdateChildProfileAsync(id, request);
+
+            if (notFound)
+                return NotFound(new ApiResponse<ChildProfileResponse>
+                {
+                    Success = false,
+                    Message = "Child profile not found."
+                });
+
+            if (!ok || data == null)
+                return BadRequest(new ApiResponse<ChildProfileResponse>
+                {
+                    Success = false,
+                    Message = "Update child profile failed.",
+                    Errors = errors.ToList()
+                });
+
+            return Ok(new ApiResponse<ChildProfileResponse>
+            {
+                Success = true,
+                Message = "Child profile updated.",
+                Data = data
+            });
+        }
+
+        [HttpDelete("{id:int}")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Delete(int id)
+        {
+            if (id <= 0)
+            {
+                return BadRequest(new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "Invalid child profile id."
+                });
+            }
+
+            var (ok, notFound, errors) = await _childProfileService.DeleteChildProfileAsync(id);
+
+            if (notFound)
+            {
+                return NotFound(new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "Child profile not found.",
+                    Data = false
+                });
+            }
+
+            if (!ok)
+            {
+                return BadRequest(new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "Delete child profile failed.",
+                    Errors = errors.ToList(),
+                    Data = false
+                });
+            }
+
+            return Ok(new ApiResponse<bool>
+            {
+                Success = true,
+                Message = "Child profile deleted.",
+                Data = true
             });
         }
     }

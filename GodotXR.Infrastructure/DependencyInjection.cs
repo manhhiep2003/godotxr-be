@@ -5,7 +5,7 @@ using GodotXR.Domain.IUnitOfWork;
 using GodotXR.Infrastructure.Configurations;
 using GodotXR.Infrastructure.Core;
 using GodotXR.Infrastructure.Data;
-using GodotXR.Infrastructure.Mappings;
+using GodotXR.Infrastructure.Mapper;
 using GodotXR.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
@@ -69,6 +69,7 @@ namespace GodotXR.Infrastructure
             services.AddScoped<IExerciseTypeService, ExerciseTypeService>();
             services.AddScoped<IExerciseService, ExerciseService>();
             services.AddScoped<IExerciseQuestionService, ExerciseQuestionService>();
+            
             // AutoMapper
             services.AddAutoMapper(cfg =>
             {

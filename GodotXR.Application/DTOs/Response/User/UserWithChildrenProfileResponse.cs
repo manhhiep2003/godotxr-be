@@ -1,6 +1,8 @@
-﻿namespace GodotXR.Application.DTOs.Response.User
+﻿using GodotXR.Application.DTOs.Response.ChildProfile;
+
+namespace GodotXR.Application.DTOs.Response.User
 {
-    public class UserResponse
+    public sealed class UserWithChildrenProfileResponse
     {
         public int Id { get; set; }
 
@@ -23,5 +25,7 @@
         public DateTime CreatedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
+
+        public List<ChildProfileResponse> ChildProfiles { get; set; } = [];
     }
 }
