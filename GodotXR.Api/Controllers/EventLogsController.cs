@@ -1,15 +1,15 @@
 ﻿using AutoMapper;
+using GodotXR.Api.Extensions;
 using GodotXR.Application.DTOs.Response;
 using GodotXR.Application.DTOs.Response.EventLog;
 using GodotXR.Domain.IUnitOfWork;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace GodotXR.Api.Controllers
 {
     [ApiController]
-    [Route("api/eventlogs")]
+    [Route("api/event-logs")]
     [Authorize]
     public class EventLogsController : ControllerBase
     {
@@ -26,20 +26,21 @@ namespace GodotXR.Api.Controllers
         [Authorize(Roles = "Admin,Teacher,Parent")]
         public async Task<IActionResult> GetByResult(int resultId)
         {
-            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var currentRole = User.FindFirst(ClaimTypes.Role)!.Value;
+            var currentUserId = User.GetUserId();
 
             var result = await _uow.ResultRepository.GetByIdAsync(resultId);
+            
             if (result == null)
                 return NotFound(new ApiResponse { Success = false, Message = "Result not found." });
 
-            if (currentRole == "Parent")
+            if (User.IsInRole("Parent"))
             {
                 var child = await _uow.ChildProfileRepository.GetByIdAsync(result.ChildId);
                 if (child == null || child.UserId != currentUserId)
                     return Forbid();
             }
-            if (currentRole == "Teacher")
+            
+            if (User.IsInRole("Teacher"))
             {
                 var hasAccess = await _uow.EnrollmentRepository
                     .HasTeacherAccessToChildAsync(currentUserId, result.ChildId);
@@ -48,10 +49,11 @@ namespace GodotXR.Api.Controllers
             }
 
             var logs = await _uow.EventLogRepository.GetByResultIdAsync(resultId);
+            
             return Ok(new ApiResponse<IEnumerable<EventLogResponse>>
             {
                 Success = true,
-                Message = "Success.",
+                Message = "OK",
                 Data = _mapper.Map<IEnumerable<EventLogResponse>>(logs)
             });
         }
@@ -60,17 +62,17 @@ namespace GodotXR.Api.Controllers
         [Authorize(Roles = "Admin,Teacher,Parent")]
         public async Task<IActionResult> GetByChild(int childId)
         {
-            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var currentRole = User.FindFirst(ClaimTypes.Role)!.Value;
+            var currentUserId = User.GetUserId();
 
             var child = await _uow.ChildProfileRepository.GetByIdAsync(childId);
+            
             if (child == null)
                 return NotFound(new ApiResponse { Success = false, Message = "Child not found." });
 
-            if (currentRole == "Parent" && child.UserId != currentUserId)
+            if (User.IsInRole("Parent") && child.UserId != currentUserId)
                 return Forbid();
 
-            if (currentRole == "Teacher")
+            if (User.IsInRole("Teacher"))
             {
                 var hasAccess = await _uow.EnrollmentRepository
                     .HasTeacherAccessToChildAsync(currentUserId, childId);
@@ -79,10 +81,11 @@ namespace GodotXR.Api.Controllers
             }
 
             var logs = await _uow.EventLogRepository.GetByChildIdAsync(childId);
+            
             return Ok(new ApiResponse<IEnumerable<EventLogResponse>>
             {
                 Success = true,
-                Message = "Success.",
+                Message = "OK",
                 Data = _mapper.Map<IEnumerable<EventLogResponse>>(logs)
             });
         }

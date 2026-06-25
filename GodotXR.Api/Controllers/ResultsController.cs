@@ -1,11 +1,11 @@
-﻿using GodotXR.Application.DTOs.Request.Result;
+﻿using GodotXR.Api.Extensions;
+using GodotXR.Application.DTOs.Request.Result;
 using GodotXR.Application.DTOs.Response;
 using GodotXR.Application.DTOs.Response.Result;
 using GodotXR.Application.Services;
 using GodotXR.Domain.IUnitOfWork;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace GodotXR.Api.Controllers
 {
@@ -56,8 +56,7 @@ namespace GodotXR.Api.Controllers
         [Authorize(Roles = "Admin,Teacher,Parent")]
         public async Task<IActionResult> GetById(int id)
         {
-            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var currentRole = User.FindFirst(ClaimTypes.Role)!.Value;
+            var currentUserId = User.GetUserId();
 
             var resultResponse = await _service.GetByIdAsync(id);
             if (!resultResponse.Success)
@@ -65,14 +64,14 @@ namespace GodotXR.Api.Controllers
 
             var data = resultResponse.Data!;
 
-            if (currentRole == "Parent")
+            if (User.IsInRole("Parent"))
             {
                 var child = await _uow.ChildProfileRepository.GetByIdAsync(data.ChildId);
                 if (child == null || child.UserId != currentUserId)
                     return Forbid();
             }
 
-            if (currentRole == "Teacher")
+            if (User.IsInRole("Teacher"))
             {
                 var hasAccess = await _uow.EnrollmentRepository
                     .HasTeacherAccessToChildAsync(currentUserId, data.ChildId);
@@ -87,17 +86,16 @@ namespace GodotXR.Api.Controllers
         [Authorize(Roles = "Admin,Teacher,Parent")]
         public async Task<IActionResult> GetByChild(int childId)
         {
-            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var currentRole = User.FindFirst(ClaimTypes.Role)!.Value;
+            var currentUserId = User.GetUserId();
 
-            if (currentRole == "Parent")
+            if (User.IsInRole("Parent"))
             {
                 var child = await _uow.ChildProfileRepository.GetByIdAsync(childId);
                 if (child == null || child.UserId != currentUserId)
                     return Forbid();
             }
 
-            if (currentRole == "Teacher")
+            if (User.IsInRole("Teacher"))
             {
                 var hasAccess = await _uow.EnrollmentRepository
                     .HasTeacherAccessToChildAsync(currentUserId, childId);
@@ -115,10 +113,9 @@ namespace GodotXR.Api.Controllers
         [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> GetByExercise(int exerciseId)
         {
-            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var currentRole = User.FindFirst(ClaimTypes.Role)!.Value;
+            var currentUserId = User.GetUserId();
 
-            if (currentRole == "Teacher")
+            if (User.IsInRole("Teacher"))
             {
                 var exercise = await _uow.ExerciseRepository.GetByIdAsync(exerciseId);
                 if (exercise == null || exercise.TeacherId != currentUserId)
@@ -130,6 +127,7 @@ namespace GodotXR.Api.Controllers
                 return NotFound(result);
             return Ok(result);
         }
+
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public IActionResult Delete(int id)
