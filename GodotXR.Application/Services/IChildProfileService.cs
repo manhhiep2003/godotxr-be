@@ -18,5 +18,7 @@ namespace GodotXR.Application.Services
 
         Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors)>
             DeleteChildProfileAsync(int id);
+
+        Task<IEnumerable<ChildProfileResponse>> GetChildProfilesByParentIdAsync(int parentId);
     }
 }

@@ -7,7 +7,7 @@ namespace GodotXR.Domain.IRepositories
     {
         Task<T?> GetByIdAsync(object id);
 
-        Task<IEnumerable<T>> GetAllAsync();
+        Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>>? filter = null);
 
         Task<PagedResult<T>> GetPagedAsync(
             int pageNumber,
