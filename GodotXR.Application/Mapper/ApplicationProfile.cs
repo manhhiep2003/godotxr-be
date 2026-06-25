@@ -3,15 +3,19 @@ using GodotXR.Application.DTOs.Request.ChildProfile;
 using GodotXR.Application.DTOs.Response.ChildProfile;
 using GodotXR.Application.DTOs.Response.Classroom;
 using GodotXR.Application.DTOs.Response.Enrollment;
+using GodotXR.Application.DTOs.Response.EventLog;
 using GodotXR.Application.DTOs.Response.Exercise;
 using GodotXR.Application.DTOs.Response.ExerciseQuestion;
 using GodotXR.Application.DTOs.Response.ExerciseType;
 using GodotXR.Application.DTOs.Response.Lesson;
 using GodotXR.Application.DTOs.Response.Program;
+using GodotXR.Application.DTOs.Response.PronunciationDetail;
+using GodotXR.Application.DTOs.Response.Result;
 using GodotXR.Application.DTOs.Response.SchoolYear;
 using GodotXR.Application.DTOs.Response.Semester;
 using GodotXR.Application.DTOs.Response.User;
 using GodotXR.Domain.Entities;
+
 namespace GodotXR.Application.Mapper
 {
     public class ApplicationProfile : Profile
@@ -91,6 +95,13 @@ namespace GodotXR.Application.Mapper
                 .ForMember(dest => dest.ChildFullName, opt => opt.MapFrom(src => src.Child.FullName))
                 .ForMember(dest => dest.ChildLearningLevel, opt => opt.MapFrom(src => src.Child.LearningLevel))
                 .ForMember(dest => dest.ClassName, opt => opt.MapFrom(src => src.Classroom.ClassName));
+
+            CreateMap<Result, ResultResponse>()
+    .ForMember(d => d.PronunciationDetails, o => o.MapFrom(s => s.PronunciationDetails))
+    .ForMember(d => d.EventLogs, o => o.MapFrom(s => s.EventLogs));
+
+            CreateMap<PronunciationDetail, PronunciationDetailResponse>();
+            CreateMap<EventLog, EventLogResponse>();
         }
     }
 }

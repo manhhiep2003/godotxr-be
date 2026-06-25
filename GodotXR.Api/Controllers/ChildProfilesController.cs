@@ -9,13 +9,13 @@ using Microsoft.AspNetCore.Mvc;
 namespace GodotXR.Api.Controllers
 {
     [ApiController]
-    [Route("api/child-profile")]
+    [Route("api/child-profiles")]
     [Authorize(Roles = "Admin,Teacher,Parent")]
-    public class ChildProfileController : ControllerBase
+    public class ChildProfilesController : ControllerBase
     {
         private readonly IChildProfileService _childProfileService;
 
-        public ChildProfileController(IChildProfileService childProfileService)
+        public ChildProfilesController(IChildProfileService childProfileService)
         {
             _childProfileService = childProfileService;
         }

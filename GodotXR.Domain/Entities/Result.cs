@@ -27,6 +27,8 @@ namespace GodotXR.Domain.Entities
         public string? InteractionLog { get; set; }
 
         public string? FeedbackText { get; set; }
+        public string SessionId { get; set; } = null!;  
+        public bool IsFinalized { get; set; } = false;  
 
         // Navigation Properties
         [ForeignKey("ChildId")]
