@@ -1,4 +1,5 @@
 ﻿using GodotXR.Api.Contracts;
+using GodotXR.Api.Extensions;
 using GodotXR.Application.DTOs.Request.ChildProfile;
 using GodotXR.Application.DTOs.Response;
 using GodotXR.Application.DTOs.Response.ChildProfile;
@@ -173,6 +174,23 @@ namespace GodotXR.Api.Controllers
                 Success = true,
                 Message = "Child profile deleted.",
                 Data = true
+            });
+        }
+
+        [HttpGet("my-children")]
+        [Authorize(Roles = "Parent")]
+        [ProducesResponseType(typeof(ApiResponse<IEnumerable<ChildProfileResponse>>), StatusCodes.Status200OK)]
+        public async Task<ActionResult> GetMyChildProfiles()
+        {
+            var parentId = User.GetUserId();
+
+            var data = await _childProfileService.GetChildProfilesByParentIdAsync(parentId);
+
+            return Ok(new ApiResponse<IEnumerable<ChildProfileResponse>>
+            {
+                Success = true,
+                Message = "OK",
+                Data = data
             });
         }
     }

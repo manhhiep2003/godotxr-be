@@ -22,9 +22,16 @@ namespace GodotXR.Infrastructure.Repositories
             return await dbSet.FindAsync(id);
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync()
+        public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>>? filter = null)
         {
-            return await dbSet.ToListAsync();
+            IQueryable<T> query = dbSet;
+
+            if (filter != null)
+            {
+                query = query.Where(filter);
+            }
+
+            return await query.ToListAsync();
         }
 
         public async Task<PagedResult<T>> GetPagedAsync(

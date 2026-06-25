@@ -180,5 +180,14 @@ namespace GodotXR.Application.Services
                 Errors: Enumerable.Empty<string>()
             );
         }
+
+        public async Task<IEnumerable<ChildProfileResponse>> GetChildProfilesByParentIdAsync(int parentId)
+        {
+            var childProfiles = await _unitOfWork.ChildProfileRepository
+                .GetAllAsync(
+                    filter: c => c.UserId == parentId && !c.IsDeleted );
+
+            return _mapper.Map<IEnumerable<ChildProfileResponse>>(childProfiles);
+        }
     }
 }
