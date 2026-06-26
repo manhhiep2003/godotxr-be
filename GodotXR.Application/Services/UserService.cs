@@ -59,12 +59,6 @@ namespace GodotXR.Application.Services
         {
             var errors = new List<string>();
 
-            var usernameExists = await _unitOfWork.UserRepository.ExistsAsync(
-                u => u.Username == request.Username && !u.IsDeleted);
-
-            if (usernameExists)
-                errors.Add($"Username '{request.Username}' đã tồn tại.");
-
             var emailExists = await _unitOfWork.UserRepository.ExistsAsync(
                 u => u.Email == request.Email && !u.IsDeleted);
 
@@ -82,7 +76,6 @@ namespace GodotXR.Application.Services
 
             var user = new User
             {
-                Username = request.Username,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                 FullName = request.FullName,
                 Email = request.Email,
@@ -108,12 +101,6 @@ namespace GodotXR.Application.Services
         {
             var errors = new List<string>();
 
-            var usernameExists = await _unitOfWork.UserRepository.ExistsAsync(
-                u => u.Username == request.Username && !u.IsDeleted);
-
-            if (usernameExists)
-                errors.Add($"Username '{request.Username}' đã tồn tại.");
-
             var emailExists = await _unitOfWork.UserRepository.ExistsAsync(
                 u => u.Email == request.Email && !u.IsDeleted);
 
@@ -134,7 +121,6 @@ namespace GodotXR.Application.Services
 
             var user = new User
             {
-                Username = request.Username,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(temporaryPassword),
                 FullName = request.FullName,
                 Email = request.Email,
@@ -158,7 +144,7 @@ namespace GodotXR.Application.Services
             {
                 var emailBody = GenerateAccountCreationEmailBody(
                     request.FullName,
-                    request.Username,
+                    request.Email,
                     temporaryPassword,
                     verifyLink);
 
@@ -175,7 +161,6 @@ namespace GodotXR.Application.Services
             return (true, Enumerable.Empty<string>(), new CreateAccountResponse
             {
                 UserId = user.Id,
-                Username = user.Username,
                 FullName = user.FullName,
                 Email = user.Email,
                 RoleName = role.RoleName.ToString(),
@@ -292,7 +277,6 @@ namespace GodotXR.Application.Services
         private static UserResponse MapToResponse(User user) => new()
         {
             Id = user.Id,
-            Username = user.Username,
             FullName = user.FullName,
             Email = user.Email,
             Phone = user.Phone ?? string.Empty,
@@ -334,7 +318,7 @@ namespace GodotXR.Application.Services
 
         private static string GenerateAccountCreationEmailBody(
             string fullName,
-            string username,
+            string email,
             string temporaryPassword,
             string verifyLink)
         {
@@ -363,7 +347,7 @@ namespace GodotXR.Application.Services
                             <p>Xin chào <strong>{fullName}</strong>,</p>
                             <p>Tài khoản của bạn đã được tạo thành công. Dưới đây là thông tin đăng nhập của bạn:</p>
                             <div class='credentials'>
-                                <p><strong>Tài khoản:</strong> {username}</p>
+                                <p><strong>Email:</strong> {email}</p>
                                 <p><strong>Mật khẩu tạm thời:</strong> {temporaryPassword}</p>
                             </div>
                             <p><strong>Lưu ý quan trọng:</strong></p>

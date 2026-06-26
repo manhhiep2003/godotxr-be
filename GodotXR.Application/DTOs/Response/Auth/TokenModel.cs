@@ -6,7 +6,9 @@
     public class TokenModel
     {
         public string AccessToken { get; set; } = string.Empty;
+
         public string RefreshToken { get; set; } = string.Empty;
+
         public UserAuthInfo? User { get; set; }
     }
 
@@ -16,12 +18,17 @@
     public class UserAuthInfo
     {
         public int Id { get; set; }
+
         public string Email { get; set; } = string.Empty;
+
         public string FullName { get; set; } = string.Empty;
-        public string Username { get; set; } = string.Empty;
+
         public string Phone { get; set; } = string.Empty;
+
         public string RoleName { get; set; } = string.Empty;
+
         public bool IsActive { get; set; }
+
         public bool MustChangePassword { get; set; }
     }
 }

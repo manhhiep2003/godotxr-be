@@ -3,12 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace GodotXR.Application.DTOs.Request.User
 {
-    public class CreateAccountRequest
+    public sealed class CreateAccountRequest
     {
-        [Required(ErrorMessage = "Username là bắt buộc.")]
-        [MaxLength(100, ErrorMessage = "Username không được vượt quá 100 ký tự.")]
-        public string Username { get; set; } = string.Empty;
-
         [Required(ErrorMessage = "FullName là bắt buộc.")]
         [MaxLength(100, ErrorMessage = "FullName không được vượt quá 100 ký tự.")]
         public string FullName { get; set; } = string.Empty;
