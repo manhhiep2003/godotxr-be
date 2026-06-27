@@ -1,7 +1,12 @@
-﻿namespace GodotXR.Application.DTOs.Request.ChildProfile
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace GodotXR.Application.DTOs.Request.ChildProfile
 {
     public sealed class UpdateChildProfileRequest
     {
+        [MaxLength(500)]
+        public string? Avatar { get; set; }
+
         public int? UserId { get; set; }
 
         public string? FullName { get; set; }

@@ -4,6 +4,7 @@ namespace GodotXR.Application.DTOs.Response.User
 {
     public sealed class UserWithChildrenProfileResponse
     {
+        public string? Avatar { get; set; }
         public int Id { get; set; }
 
         public string FullName { get; set; } = string.Empty;

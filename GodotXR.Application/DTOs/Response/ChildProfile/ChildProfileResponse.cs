@@ -2,6 +2,7 @@
 {
     public sealed class ChildProfileResponse
     {
+        public string? Avatar { get; set; }
         public int Id { get; set; }
 
         public int UserId { get; set; }

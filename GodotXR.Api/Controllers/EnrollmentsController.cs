@@ -144,5 +144,27 @@ namespace GodotXR.Api.Controllers
 
             return Ok(new ApiResponse<EnrollmentResponse> { Success = true, Message = "Duyệt ghi danh thành công.", Data = data });
         }
+        [HttpGet("child/{childId:int}")]
+        [Authorize(Roles = "Admin,Teacher,Parent")]
+        [ProducesResponseType(typeof(ApiResponse<IEnumerable<EnrollmentResponse>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult> GetByChild(int childId)
+        {
+            if (childId <= 0)
+                return BadRequest(new ApiResponse<IEnumerable<EnrollmentResponse>>
+                {
+                    Success = false,
+                    Message = "Invalid child id."
+                });
+
+            var data = await _enrollmentService.GetEnrollmentsByChildIdAsync(childId);
+
+            return Ok(new ApiResponse<IEnumerable<EnrollmentResponse>>
+            {
+                Success = true,
+                Message = "OK",
+                Data = data
+            });
+        }
     }
 }

@@ -4,6 +4,8 @@ namespace GodotXR.Domain.Entities
 {
     public class User : BaseEntity
     {
+        [MaxLength(500)]
+        public string? Avatar { get; set; }
         [MaxLength(255)]
         public string PasswordHash { get; set; } = string.Empty;
         [Required]

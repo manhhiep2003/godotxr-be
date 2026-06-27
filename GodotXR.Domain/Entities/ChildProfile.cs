@@ -5,6 +5,8 @@ namespace GodotXR.Domain.Entities
 {
     public class ChildProfile : BaseEntity
     {
+        [MaxLength(500)]
+        public string? Avatar { get; set; }
         public int UserId { get; set; }
 
         [Required, MaxLength(100)]

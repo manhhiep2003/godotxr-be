@@ -22,5 +22,6 @@ namespace GodotXR.Application.Services
             ApproveEnrollmentAsync(int id, int requesterId, string requesterRole);
         Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors)>
             DeleteEnrollmentAsync(int id);
+        Task<IEnumerable<EnrollmentResponse>> GetEnrollmentsByChildIdAsync(int childId);
     }
 }
