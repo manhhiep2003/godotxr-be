@@ -6,27 +6,53 @@ namespace GodotXR.Domain.Entities
     {
         public int ChildId { get; set; }
 
-        public int TotalExercises { get; set; }
+        // Mức độ chậm nói
+        public string? SpeechLevel { get; set; }
 
-        public int CompletedExercises { get; set; }
+        // Chuẩn đoán
+        public string? Diagnosis { get; set; }
 
-        public int TotalPracticeTime { get; set; }
+        // Khó khăn của trẻ
+        public string? Difficulties { get; set; }
 
-        public float AverageScore { get; set; }
-
-        public string? ProgressLevel { get; set; }
-
+        // Điểm mạnh
         public string? Strengths { get; set; }
 
+        // Điểm yếu
         public string? Weaknesses { get; set; }
 
+        // Khả năng giao tiếp
+        public string? CommunicationAbility { get; set; }
+
+        // Khả năng phát âm
+        public string? PronunciationAbility { get; set; }
+
+        // Khả năng hiểu ngôn ngữ
+        public string? LanguageComprehension { get; set; }
+
+        // Khả năng biểu đạt
+        public string? LanguageExpression { get; set; }
+
+        // Khả năng chú ý
+        public string? AttentionLevel { get; set; }
+
+        // Khả năng tương tác xã hội
+        public string? SocialInteraction { get; set; }
+
+        // Mục tiêu can thiệp
+        public string? InterventionGoals { get; set; }
+
+        // Khuyến nghị của chuyên gia
         public string? Recommendation { get; set; }
 
-        public DateTime? LastAnalyzedAt { get; set; }
+        // Ghi chú
+        public string? Notes { get; set; }
 
-        public DateTime? PeriodStart { get; set; }
+        // Ngày đánh giá
+        public DateTime AssessmentDate { get; set; }
 
-        public DateTime? PeriodEnd { get; set; }
+        // Đánh giá tiếp theo
+        public DateTime? NextAssessmentDate { get; set; }
 
         // Navigation Properties
         [ForeignKey("ChildId")]
