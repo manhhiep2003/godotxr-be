@@ -1,63 +1,57 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace GodotXR.Domain.Entities
+namespace GodotXR.Application.DTOs.Request.Analyze
 {
-    public class Analyze : BaseEntity
+    public sealed class CreateAnalyzeRequest
     {
+        [Required]
         public int ChildId { get; set; }
 
-        // Mức độ chậm nói
+        [Required]
         public SpeechLevel SpeechLevel { get; set; }
 
-        // Chuẩn đoán
+        [MaxLength(500)]
         public string? Diagnosis { get; set; }
 
-        // Khó khăn của trẻ
+        [MaxLength(1000)]
         public string? Difficulties { get; set; }
 
-        // Điểm mạnh
+        [MaxLength(1000)]
         public string? Strengths { get; set; }
 
-        // Điểm yếu
+        [MaxLength(1000)]
         public string? Weaknesses { get; set; }
 
-        // Khả năng giao tiếp
+        [Required]
         public AssessmentLevel CommunicationAbility { get; set; }
 
-        // Khả năng phát âm
+        [Required]
         public AssessmentLevel PronunciationAbility { get; set; }
 
-        // Khả năng hiểu ngôn ngữ
+        [Required]
         public AssessmentLevel LanguageComprehension { get; set; }
 
-        // Khả năng biểu đạt
+        [Required]
         public AssessmentLevel LanguageExpression { get; set; }
 
-        // Khả năng chú ý
+        [Required]
         public AssessmentLevel AttentionLevel { get; set; }
 
-        // Khả năng tương tác xã hội
+        [Required]
         public AssessmentLevel SocialInteraction { get; set; }
 
-        // Mục tiêu can thiệp
+        [MaxLength(1000)]
         public string? InterventionGoals { get; set; }
 
-        // Khuyến nghị của chuyên gia
+        [MaxLength(2000)]
         public string? Recommendation { get; set; }
 
-        // Ghi chú
+        [MaxLength(2000)]
         public string? Notes { get; set; }
 
-        // Ngày đánh giá
+        [Required]
         public DateTime AssessmentDate { get; set; }
 
-        // Đánh giá tiếp theo
         public DateTime? NextAssessmentDate { get; set; }
-
-        // Navigation Properties
-        [ForeignKey("ChildId")]
-        public ChildProfile Child { get; set; } = null!;
-
-        public ICollection<Report> Reports { get; set; } = new List<Report>();
     }
 }

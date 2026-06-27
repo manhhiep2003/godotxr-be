@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+using GodotXR.Application.DTOs.Request.Analyze;
 using GodotXR.Application.DTOs.Request.ChildProfile;
+using GodotXR.Application.DTOs.Response.Analyze;
 using GodotXR.Application.DTOs.Response.ChildProfile;
 using GodotXR.Application.DTOs.Response.Classroom;
 using GodotXR.Application.DTOs.Response.Enrollment;
@@ -31,6 +33,7 @@ namespace GodotXR.Application.Mapper
                    src.Lessons.Where(l => !l.IsDeleted).ToList()));
 
             CreateMap<Lesson, LessonSummaryResponse>();
+
             CreateMap<Lesson, LessonResponse>();
 
             CreateMap<SchoolYear, SchoolYearResponse>()
@@ -97,11 +100,20 @@ namespace GodotXR.Application.Mapper
                 .ForMember(dest => dest.ClassName, opt => opt.MapFrom(src => src.Classroom.ClassName));
 
             CreateMap<Result, ResultResponse>()
-    .ForMember(d => d.PronunciationDetails, o => o.MapFrom(s => s.PronunciationDetails))
-    .ForMember(d => d.EventLogs, o => o.MapFrom(s => s.EventLogs));
+                .ForMember(d => d.PronunciationDetails, o => o.MapFrom(s => s.PronunciationDetails))
+                .ForMember(d => d.EventLogs, o => o.MapFrom(s => s.EventLogs));
 
             CreateMap<PronunciationDetail, PronunciationDetailResponse>();
+            
             CreateMap<EventLog, EventLogResponse>();
+
+            CreateMap<Analyze, AnalyzeResponse>();
+
+            CreateMap<CreateAnalyzeRequest, Analyze>();
+
+            CreateMap<UpdateAnalyzeRequest, Analyze>()
+                .ForAllMembers(opts =>
+                    opts.Condition((src, dest, srcMember) => srcMember != null));
         }
     }
 }

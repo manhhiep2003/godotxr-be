@@ -70,6 +70,8 @@ namespace GodotXR.Infrastructure
             services.AddScoped<IExerciseService, ExerciseService>();
             services.AddScoped<IExerciseQuestionService, ExerciseQuestionService>();
             services.AddScoped<IResultService, ResultService>();
+            services.AddScoped<IAnalyzeService, AnalyzeService>();
+
             // AutoMapper
             services.AddAutoMapper(cfg =>
             {

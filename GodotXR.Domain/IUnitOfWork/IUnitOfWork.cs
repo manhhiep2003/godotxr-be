@@ -23,17 +23,27 @@ namespace GodotXR.Domain.IUnitOfWork
         IEnrollmentRepository EnrollmentRepository { get; }
 
         IExerciseTypeRepository ExerciseTypeRepository { get; }
+
         IExerciseRepository ExerciseRepository { get; }
+
         IExerciseQuestionRepository ExerciseQuestionRepository { get; }
-        // Generic repository method (for other entities if needed)
-        IResultRepository ResultRepository { get; }                       
-        IPronunciationDetailRepository PronunciationDetailRepository { get; } 
-        IEventLogRepository EventLogRepository { get; }                       
+
+        IResultRepository ResultRepository { get; }
+
+        IPronunciationDetailRepository PronunciationDetailRepository { get; }
+
+        IEventLogRepository EventLogRepository { get; }
+
+        IAnalyzeRepository AnalyzeRepository { get; }
+
         IGenericRepository<T> Repository<T>() where T : class;
 
         Task<int> SaveChangesAsync();
+
         Task BeginTransactionAsync();
+
         Task CommitTransactionAsync();
+
         Task RollbackTransactionAsync();
     }
 }
