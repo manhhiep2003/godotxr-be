@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using GodotXR.Application.DTOs.Response.Enrollment;
 using GodotXR.Domain.Entities;
 using System.Security.Claims;
 
@@ -15,7 +14,6 @@ namespace GodotXR.Infrastructure.Mapper
                 new Claim(ClaimTypes.Email, src.Email),
                 new Claim(ClaimTypes.Name, src.FullName),
                 new Claim(ClaimTypes.Role, src.Role != null ? src.Role.RoleName.ToString() : "Parent")
-
             });
         }
     }
