@@ -2,6 +2,8 @@
 {
     public sealed class AnalyzeResponse
     {
+        public int Id { get; set; }
+
         public int ChildId { get; set; }
 
         public string? SpeechLevel { get; set; }
