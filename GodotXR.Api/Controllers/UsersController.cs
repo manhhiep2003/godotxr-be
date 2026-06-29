@@ -11,7 +11,6 @@ namespace GodotXR.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -22,7 +21,6 @@ namespace GodotXR.Api.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> Get([FromQuery] PaginationQuery query)
         {
             var data = await _userService.GetListUserAsync(query.PageNumber, query.PageSize);
@@ -30,6 +28,7 @@ namespace GodotXR.Api.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> GetById(int id)
         {
             if (id <= 0)
