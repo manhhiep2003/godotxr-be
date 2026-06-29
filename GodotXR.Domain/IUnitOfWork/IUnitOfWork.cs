@@ -35,7 +35,7 @@ namespace GodotXR.Domain.IUnitOfWork
         IEventLogRepository EventLogRepository { get; }
 
         IAnalyzeRepository AnalyzeRepository { get; }
-
+        IReportRepository ReportRepository { get; }
         IGenericRepository<T> Repository<T>() where T : class;
 
         Task<int> SaveChangesAsync();

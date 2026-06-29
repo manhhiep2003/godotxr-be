@@ -27,7 +27,7 @@ namespace GodotXR.Infrastructure.UnitOfWork
         private IPronunciationDetailRepository? _pronunciationDetailRepository;
         private IEventLogRepository? _eventLogRepository;
         private IAnalyzeRepository? _analyzeRepository;
-
+        private IReportRepository? _reportRepository;
         public UnitOfWork(AppDbContext context)
         {
             _context = context;
@@ -233,6 +233,13 @@ namespace GodotXR.Infrastructure.UnitOfWork
                 return _enrollmentRepository;
             }
         }
-       
+        public IReportRepository ReportRepository
+        {
+            get
+            {
+                _reportRepository ??= new ReportRepository(_context);
+                return _reportRepository;
+            }
+        }
     }
 }
