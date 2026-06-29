@@ -7,6 +7,8 @@ namespace GodotXR.Application.DTOs.Request.User
 {
     public class CreateUserRequest
     {
+        [MaxLength(500)]
+        public string? Avatar { get; set; }
         [Required]
         [MinLength(6)]
         public string Password { get; set; } = string.Empty;

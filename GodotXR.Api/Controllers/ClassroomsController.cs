@@ -166,5 +166,26 @@ namespace GodotXR.Api.Controllers
                 Data = true
             });
         }
+        [HttpGet("{teacherId:int}/classrooms")]
+        [ProducesResponseType(typeof(ApiResponse<PagedResponse<ClassroomResponse>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetByTeacher(int teacherId, [FromQuery] PaginationQuery query)
+        {
+            if (teacherId <= 0)
+                return BadRequest(new ApiResponse<PagedResponse<ClassroomResponse>>
+                {
+                    Success = false,
+                    Message = "Invalid teacher id."
+                });
+
+            var data = await _classroomService.GetClassroomsByTeacherIdAsync(teacherId, query.PageNumber, query.PageSize);
+
+            return Ok(new ApiResponse<PagedResponse<ClassroomResponse>>
+            {
+                Success = true,
+                Message = "OK",
+                Data = data
+            });
+        }
     }
 }

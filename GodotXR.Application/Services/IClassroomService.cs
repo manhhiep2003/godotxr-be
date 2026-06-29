@@ -14,5 +14,6 @@ namespace GodotXR.Application.Services
             UpdateClassroomAsync(int id, UpdateClassroomRequest request);
         Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors)>
             DeleteClassroomAsync(int id);
+        Task<PagedResponse<ClassroomResponse>> GetClassroomsByTeacherIdAsync(int teacherId, int pageNumber, int pageSize);
     }
 }

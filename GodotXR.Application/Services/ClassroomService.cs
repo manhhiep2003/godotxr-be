@@ -194,5 +194,39 @@ namespace GodotXR.Application.Services
 
             return (true, false, Enumerable.Empty<string>());
         }
+        public async Task<PagedResponse<ClassroomResponse>> GetClassroomsByTeacherIdAsync(int teacherId, int pageNumber, int pageSize)
+        {
+            var teacher = await _unitOfWork.UserRepository
+                .GetFirstOrDefaultAsync(
+                    filter: u => u.Id == teacherId && !u.IsDeleted && u.IsActive && u.Role.RoleName == UserRole.Teacher,
+                    includeProperties: "Role",
+                    tracked: false);
+
+            if (teacher == null)
+                return new PagedResponse<ClassroomResponse>
+                {
+                    PageNumber = pageNumber,
+                    PageSize = pageSize,
+                    TotalCount = 0,
+                    TotalPages = 0,
+                    Items = new List<ClassroomResponse>()
+                };
+
+            var paged = await _unitOfWork.ClassroomRepository.GetPagedAsync(
+                pageNumber, pageSize,
+                predicate: c => !c.IsDeleted && c.UserId == teacherId,
+                orderBy: q => q.OrderByDescending(c => c.StartDate),
+                includeProperties: "User,User.Role,Program,Semester,Enrollments"
+            );
+
+            return new PagedResponse<ClassroomResponse>
+            {
+                PageNumber = paged.PageNumber,
+                PageSize = paged.PageSize,
+                TotalCount = paged.TotalCount,
+                TotalPages = paged.TotalPages,
+                Items = _mapper.Map<List<ClassroomResponse>>(paged.Items)
+            };
+        }
     }
 }

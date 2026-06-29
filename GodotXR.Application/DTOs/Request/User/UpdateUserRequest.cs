@@ -10,6 +10,8 @@ namespace GodotXR.Application.DTOs.Request.User
 {
     public class UpdateUserRequest
     {
+        [MaxLength(500)]
+        public string? Avatar { get; set; }
         [MaxLength(100)]
         public string? FullName { get; set; }
 

@@ -4,6 +4,9 @@ namespace GodotXR.Application.DTOs.Request.ChildProfile
 {
     public sealed class CreateChildProfileRequest
     {
+        [MaxLength(500)]
+        public string? Avatar { get; set; }
+
         [Required]
         public int UserId { get; set; }
 
