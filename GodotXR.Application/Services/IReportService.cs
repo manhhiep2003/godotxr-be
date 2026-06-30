@@ -11,7 +11,7 @@ namespace GodotXR.Application.Services
 {
     public interface IReportService
     {
-        Task<PagedResponse<ReportResponse>> GetListReportAsync(int pageNumber, int pageSize);
+        Task<PagedResponse<ReportResponse>> GetListReportAsync(int pageNumber, int pageSize, int userId, string role);
         Task<ReportResponse?> GetReportByIdAsync(int id);
         Task<(bool Succeeded, IEnumerable<string> Errors, ReportResponse? Data)> CreateReportAsync(int generatedBy, CreateReportRequest request);
         Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors, ReportResponse? Data)> UpdateReportAsync(int id, UpdateReportRequest request);

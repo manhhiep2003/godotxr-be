@@ -6,6 +6,7 @@ using GodotXR.Application.DTOs.Response.Report;
 using GodotXR.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace GodotXR.Api.Controllers
 {
@@ -20,12 +21,16 @@ namespace GodotXR.Api.Controllers
         {
             _reportService = reportService;
         }
+
         [HttpGet]
         [Authorize(Roles = "Admin,Teacher,Parent")]
         [ProducesResponseType(typeof(ApiResponse<PagedResponse<ReportResponse>>), StatusCodes.Status200OK)]
         public async Task<ActionResult> Get([FromQuery] PaginationQuery query)
         {
-            var data = await _reportService.GetListReportAsync(query.PageNumber, query.PageSize);
+            var userId = User.GetUserId();
+            var role = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
+
+            var data = await _reportService.GetListReportAsync(query.PageNumber, query.PageSize, userId, role);
             return Ok(new ApiResponse<PagedResponse<ReportResponse>> { Success = true, Message = "OK", Data = data });
         }
 
@@ -44,6 +49,7 @@ namespace GodotXR.Api.Controllers
 
             return Ok(new ApiResponse<ReportResponse> { Success = true, Message = "OK", Data = data });
         }
+
         [HttpPost]
         [Authorize(Roles = "Admin,Teacher,Parent")]
         [ProducesResponseType(typeof(ApiResponse<ReportResponse>), StatusCodes.Status200OK)]
@@ -78,6 +84,7 @@ namespace GodotXR.Api.Controllers
 
             return Ok(new ApiResponse<ReportResponse> { Success = true, Message = "Report updated.", Data = data });
         }
+
         [HttpDelete("{id:int}")]
         [Authorize(Roles = "Admin")]
         [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]

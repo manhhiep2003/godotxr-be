@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using GodotXR.Application.DTOs.Request.Report;
+﻿using GodotXR.Application.DTOs.Request.Report;
 using GodotXR.Application.DTOs.Response;
 using GodotXR.Application.DTOs.Response.Report;
 using GodotXR.Domain.Entities;
@@ -21,21 +15,41 @@ namespace GodotXR.Application.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<PagedResponse<ReportResponse>> GetListReportAsync(int pageNumber, int pageSize)
+        public async Task<PagedResponse<ReportResponse>> GetListReportAsync(int pageNumber, int pageSize, int userId, string role)
         {
             var paged = await _unitOfWork.ReportRepository.GetPagedAsync(
                 pageNumber,
                 pageSize,
                 r => !r.IsDeleted,
-                includeProperties: "GeneratedByUser");
+                includeProperties: "GeneratedByUser,Analyze.Child.Enrollments.Classroom,Analyze.Child.Results");
+
+            List<Report> filtered;
+
+            if (role == "Admin")
+            {
+                filtered = paged.Items.ToList();
+            }
+            else if (role == "Teacher")
+            {
+                filtered = paged.Items
+                    .Where(r => r.Analyze?.Child?.Enrollments
+                        .Any(e => !e.IsDeleted && e.Classroom?.UserId == userId) == true)
+                    .ToList();
+            }
+            else
+            {
+                filtered = paged.Items
+                    .Where(r => r.Analyze?.Child?.UserId == userId)
+                    .ToList();
+            }
 
             return new PagedResponse<ReportResponse>
             {
                 PageNumber = paged.PageNumber,
                 PageSize = paged.PageSize,
-                TotalCount = paged.TotalCount,
+                TotalCount = filtered.Count,
                 TotalPages = paged.TotalPages,
-                Items = paged.Items.Select(MapToResponse).ToList()
+                Items = filtered.Select(MapToResponse).ToList()
             };
         }
 
@@ -52,16 +66,25 @@ namespace GodotXR.Application.Services
         public async Task<(bool Succeeded, IEnumerable<string> Errors, ReportResponse? Data)> CreateReportAsync(int generatedBy, CreateReportRequest request)
         {
             var errors = new List<string>();
+            var analyze = await _unitOfWork.AnalyzeRepository.GetFirstOrDefaultAsync(
+                filter: a => a.Id == request.AnalyzeId && !a.IsDeleted,
+                includeProperties: "Child.Results",
+                tracked: false);
 
-            // BR-125: chỉ dùng valid data — kiểm tra AnalyzeId tồn tại
-            var analyzeExists = await _unitOfWork.AnalyzeRepository.ExistsAsync(
-                a => a.Id == request.AnalyzeId && !a.IsDeleted);
-
-            if (!analyzeExists)
+            if (analyze == null)
+            {
                 errors.Add($"Analyze '{request.AnalyzeId}' không tồn tại.");
-
-            if (errors.Any())
                 return (false, errors, null);
+            }
+
+            var hasFinalizedResults = analyze.Child?.Results
+                .Any(r => r.IsFinalized && !r.IsDeleted) == true;
+
+            if (!hasFinalizedResults)
+            {
+                errors.Add("Không có Result nào được finalized để generate report.");
+                return (false, errors, null);
+            }
 
             var report = new Report
             {
@@ -75,7 +98,7 @@ namespace GodotXR.Application.Services
             await _unitOfWork.SaveChangesAsync();
 
             var created = await _unitOfWork.ReportRepository.GetFirstOrDefaultAsync(
-                r => r.Id == report.Id,
+                filter: r => r.Id == report.Id,
                 includeProperties: "GeneratedByUser",
                 tracked: false);
 
@@ -85,7 +108,7 @@ namespace GodotXR.Application.Services
         public async Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors, ReportResponse? Data)> UpdateReportAsync(int id, UpdateReportRequest request)
         {
             var report = await _unitOfWork.ReportRepository.GetFirstOrDefaultAsync(
-                r => r.Id == id && !r.IsDeleted,
+                filter: r => r.Id == id && !r.IsDeleted,
                 includeProperties: "GeneratedByUser");
 
             if (report == null)
@@ -108,7 +131,7 @@ namespace GodotXR.Application.Services
         public async Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors)> DeleteReportAsync(int id)
         {
             var report = await _unitOfWork.ReportRepository.GetFirstOrDefaultAsync(
-                r => r.Id == id && !r.IsDeleted);
+                filter: r => r.Id == id && !r.IsDeleted);
 
             if (report == null)
                 return (false, true, Enumerable.Empty<string>());
@@ -131,6 +154,7 @@ namespace GodotXR.Application.Services
             GeneratedByName = r.GeneratedByUser?.FullName ?? string.Empty,
             ReportFormat = r.ReportFormat,
             FileUrl = r.FileUrl,
+            GeneratedAt = r.CreatedAt,
             CreatedAt = r.CreatedAt,
             UpdatedAt = r.UpdatedAt
         };

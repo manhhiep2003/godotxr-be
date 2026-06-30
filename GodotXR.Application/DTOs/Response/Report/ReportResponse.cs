@@ -14,7 +14,9 @@ namespace GodotXR.Application.DTOs.Response.Report
         public string GeneratedByName { get; set; } = string.Empty;
         public string ReportFormat { get; set; } = string.Empty;
         public string? FileUrl { get; set; }
+        public DateTime GeneratedAt { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
     }
+
 }
