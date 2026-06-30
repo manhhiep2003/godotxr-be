@@ -20,8 +20,11 @@ namespace GodotXR.Domain.Entities
 
         [MaxLength(50)]
         public string Status { get; set; } = "Active";
+
         public Program Program { get; set; } = null!;
 
         public ICollection<Exercise> Exercises { get; set; } = new List<Exercise>();
+
+        public ICollection<Result> Results { get; set; } = new List<Result>();
     }
 }

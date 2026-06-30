@@ -4,18 +4,16 @@ using GodotXR.Application.DTOs.Response;
 using GodotXR.Application.DTOs.Response.Result;
 using GodotXR.Domain.Entities;
 using GodotXR.Domain.IUnitOfWork;
-using GodotXR.Application.DTOs.Response.PronunciationDetail;
-using GodotXR.Application.DTOs.Response.EventLog;
 namespace GodotXR.Application.Services
 {
     public class ResultService : IResultService
     {
-        private readonly IUnitOfWork _uow;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
 
-        public ResultService(IUnitOfWork uow, IMapper mapper)
+        public ResultService(IUnitOfWork unitOfWork, IMapper mapper)
         {
-            _uow = uow;
+            _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
 
@@ -23,31 +21,58 @@ namespace GodotXR.Application.Services
         {
             var errors = new List<string>();
 
+            if (request.ExerciseId.HasValue && request.LessonId.HasValue)
+                errors.Add("Only one of ExerciseId or LessonId can be provided.");
+
+            if (!request.ExerciseId.HasValue && !request.LessonId.HasValue)
+                errors.Add("Either ExerciseId or LessonId must be provided.");
+
+            if (errors.Any())
+                return (false, false, errors, null);
+
+            var resultType = request.ExerciseId.HasValue
+                ? ResultType.Exercise
+                : ResultType.Lesson;
+
             // BR-80: idempotent — cùng SessionId không tạo duplicate
-            var existing = await _uow.ResultRepository.GetBySessionIdAsync(request.SessionId);
+            var existing = await _unitOfWork.ResultRepository.GetBySessionIdAsync(request.SessionId);
             if (existing != null)
                 return (true, false, Array.Empty<string>(), _mapper.Map<ResultResponse>(existing));
 
             // BR-75: Child phải active
-            var child = await _uow.ChildProfileRepository.GetByIdAsync(request.ChildId);
+            var child = await _unitOfWork.ChildProfileRepository.GetByIdAsync(request.ChildId);
             if (child == null)
                 return (false, true, new[] { "Child not found." }, null);
             if (child.Status != "Active")
                 errors.Add("Child profile is not active.");
 
             // BR-76: phải có active Enrollment
-            var enrollments = await _uow.EnrollmentRepository.GetByChildIdAsync(request.ChildId);
+            var enrollments = await _unitOfWork.EnrollmentRepository.GetByChildIdAsync(request.ChildId);
             if (!enrollments.Any(e => e.Status == "Active" && !e.IsDeleted))
                 errors.Add("Child does not have an active enrollment.");
 
             // BR-84: Exercise phải tồn tại
-            var exercise = await _uow.ExerciseRepository.GetByIdAsync(request.ExerciseId);
-            if (exercise == null)
-                return (false, true, new[] { "Exercise not found." }, null);
+            if (resultType == ResultType.Exercise)
+            {
+                var exercise = await _unitOfWork.ExerciseRepository.GetByIdAsync(request.ExerciseId!.Value);
 
-            // BR-74: Exercise phải active
-            if (exercise.Status != "Active")
-                errors.Add("Exercise is not active.");
+                if (exercise == null)
+                    return (false, true, new[] { "Exercise not found." }, null);
+
+                // BR-74: Exercise phải active
+                if (exercise.Status != "Active")
+                    errors.Add("Exercise is not active.");
+            }
+            else
+            {
+                var lesson = await _unitOfWork.LessonRepository.GetByIdAsync(request.LessonId!.Value);
+
+                if (lesson == null)
+                    return (false, true, new[] { "Lesson not found." }, null);
+
+                if (lesson.Status != "Active")
+                    errors.Add("Lesson is not active.");
+            }
 
             // BR-86: Score range
             if (request.Score < 0 || request.Score > 100)
@@ -63,77 +88,86 @@ namespace GodotXR.Application.Services
                 errors.Add("Invalid completion status. Must be 'Completed' or 'Incomplete'.");
 
             // BR-97: AccuracyScore range
-            foreach (var pd in request.PronunciationDetails)
-            {
-                if (pd.AccuracyScore < 0 || pd.AccuracyScore > 100)
-                    errors.Add("AccuracyScore must be between 0 and 100.");
-            }
+            //foreach (var pd in request.PronunciationDetails)
+            //{
+            //    if (pd.AccuracyScore < 0 || pd.AccuracyScore > 100)
+            //        errors.Add("AccuracyScore must be between 0 and 100.");
+            //}
 
             if (errors.Any())
                 return (false, false, errors, null);
 
             // BR-78: AttemptNumber tự tăng
-            var attemptCount = await _uow.ResultRepository.GetAttemptCountAsync(request.ChildId, request.ExerciseId);
+            var attemptCount = await _unitOfWork.ResultRepository.GetAttemptCountAsync(request.ChildId, request.ExerciseId, request.LessonId);
 
             var result = new Result
             {
                 SessionId = request.SessionId,
+
                 ChildId = request.ChildId,
+
+                ResultType = resultType,
+
+                LessonId = request.LessonId,
                 ExerciseId = request.ExerciseId,
+
                 AttemptNumber = attemptCount + 1,
+
                 CompletionStatus = request.CompletionStatus,
                 Score = request.Score,
+
                 StartedAt = request.StartedAt,
                 CompletedAt = request.CompletedAt,
+
                 DurationSeconds = request.DurationSeconds,
-                AudioRecordUrl = request.AudioRecordUrl,
-                ReplayDataUrl = request.ReplayDataUrl,
+
                 InteractionLog = request.InteractionLog,
                 FeedbackText = request.FeedbackText,
+
                 IsFinalized = request.CompletionStatus == "Completed", // BR-89
             };
 
-            await _uow.ResultRepository.AddAsync(result);
-            await _uow.SaveChangesAsync(); // Save trước để có ResultId cho FK
+            await _unitOfWork.ResultRepository.AddAsync(result);
+            await _unitOfWork.SaveChangesAsync(); // Save trước để có ResultId cho FK
 
             // BR-95, 98: PronunciationDetails phải có ResultId hợp lệ
-            foreach (var pdReq in request.PronunciationDetails)
-            {
-                var pd = new PronunciationDetail
-                {
-                    ResultId = result.Id,
-                    ExpectedPhoneme = pdReq.ExpectedPhoneme,
-                    ActualPhoneme = pdReq.ActualPhoneme,
-                    AccuracyScore = pdReq.AccuracyScore,
-                    IssueType = pdReq.IssueType,
-                    ReplayDataUrl = pdReq.ReplayDataUrl,
-                };
-                await _uow.PronunciationDetailRepository.AddAsync(pd);
-            }
+            //foreach (var pdReq in request.PronunciationDetails)
+            //{
+            //    var pd = new PronunciationDetail
+            //    {
+            //        ResultId = result.Id,
+            //        ExpectedPhoneme = pdReq.ExpectedPhoneme,
+            //        ActualPhoneme = pdReq.ActualPhoneme,
+            //        AccuracyScore = pdReq.AccuracyScore,
+            //        IssueType = pdReq.IssueType,
+            //        ReplayDataUrl = pdReq.ReplayDataUrl,
+            //    };
+            //    await _unitOfWork.PronunciationDetailRepository.AddAsync(pd);
+            //}
 
             // BR-175: EventLogs
-            foreach (var evReq in request.EventLogs)
-            {
-                var ev = new EventLog
-                {
-                    ResultId = result.Id,
-                    ChildId = request.ChildId,
-                    EventType = evReq.EventType,
-                    EventTime = evReq.EventTime,
-                    Description = evReq.Description,
-                };
-                await _uow.EventLogRepository.AddAsync(ev);
-            }
+            //foreach (var evReq in request.EventLogs)
+            //{
+            //    var ev = new EventLog
+            //    {
+            //        ResultId = result.Id,
+            //        ChildId = request.ChildId,
+            //        EventType = evReq.EventType,
+            //        EventTime = evReq.EventTime,
+            //        Description = evReq.Description,
+            //    };
+            //    await _unitOfWork.EventLogRepository.AddAsync(ev);
+            //}
 
-            await _uow.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
+            var fullResult = await _unitOfWork.ResultRepository.GetWithDetailsAsync(result.Id);
 
-            var fullResult = await _uow.ResultRepository.GetWithDetailsAsync(result.Id);
             return (true, false, Array.Empty<string>(), _mapper.Map<ResultResponse>(fullResult));
         }
 
         public async Task<ApiResponse<ResultResponse>> GetByIdAsync(int id)
         {
-            var result = await _uow.ResultRepository.GetWithDetailsAsync(id);
+            var result = await _unitOfWork.ResultRepository.GetWithDetailsAsync(id);
             if (result == null)
                 return new ApiResponse<ResultResponse> { Success = false, Message = "Result not found." };
 
@@ -147,11 +181,11 @@ namespace GodotXR.Application.Services
 
         public async Task<ApiResponse<IEnumerable<ResultResponse>>> GetByChildIdAsync(int childId)
         {
-            var child = await _uow.ChildProfileRepository.GetByIdAsync(childId);
+            var child = await _unitOfWork.ChildProfileRepository.GetByIdAsync(childId);
             if (child == null)
                 return new ApiResponse<IEnumerable<ResultResponse>> { Success = false, Message = "Child not found." };
 
-            var results = await _uow.ResultRepository.GetByChildIdAsync(childId);
+            var results = await _unitOfWork.ResultRepository.GetByChildIdAsync(childId);
             return new ApiResponse<IEnumerable<ResultResponse>>
             {
                 Success = true,
@@ -162,11 +196,11 @@ namespace GodotXR.Application.Services
 
         public async Task<ApiResponse<IEnumerable<ResultResponse>>> GetByExerciseIdAsync(int exerciseId)
         {
-            var exercise = await _uow.ExerciseRepository.GetByIdAsync(exerciseId);
+            var exercise = await _unitOfWork.ExerciseRepository.GetByIdAsync(exerciseId);
             if (exercise == null)
                 return new ApiResponse<IEnumerable<ResultResponse>> { Success = false, Message = "Exercise not found." };
 
-            var results = await _uow.ResultRepository.GetByExerciseIdAsync(exerciseId);
+            var results = await _unitOfWork.ResultRepository.GetByExerciseIdAsync(exerciseId);
             return new ApiResponse<IEnumerable<ResultResponse>>
             {
                 Success = true,

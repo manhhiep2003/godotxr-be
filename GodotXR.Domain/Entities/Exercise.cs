@@ -41,6 +41,7 @@ namespace GodotXR.Domain.Entities
         public ExerciseType ExerciseType { get; set; } = null!;
 
         public ICollection<ExerciseQuestion> ExerciseQuestions { get; set; } = new List<ExerciseQuestion>();
+
         public ICollection<Result> Results { get; set; } = new List<Result>();
     }
 }

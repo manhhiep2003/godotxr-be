@@ -2,11 +2,6 @@
 using GodotXR.Domain.IRepositories;
 using GodotXR.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GodotXR.Infrastructure.Repositories
 {
@@ -18,9 +13,17 @@ namespace GodotXR.Infrastructure.Repositories
             => await _context.Results
                 .FirstOrDefaultAsync(r => r.SessionId == sessionId && !r.IsDeleted);
 
-        public async Task<int> GetAttemptCountAsync(int childId, int exerciseId)
-            => await _context.Results
-                .CountAsync(r => r.ChildId == childId && r.ExerciseId == exerciseId && !r.IsDeleted);
+        public async Task<int> GetAttemptCountAsync(int childId, int? lessonId, int? exerciseId)
+        {
+            var query = _context.Results.Where(r => r.ChildId == childId && !r.IsDeleted);
+
+            if (exerciseId.HasValue)
+            {
+                return await query.CountAsync(r => r.ExerciseId == exerciseId);
+            }
+
+            return await query.CountAsync(r => r.LessonId == lessonId);
+        }
 
         public async Task<Result?> GetWithDetailsAsync(int id)
             => await _context.Results

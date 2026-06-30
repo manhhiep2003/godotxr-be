@@ -146,6 +146,12 @@ namespace GodotXR.Infrastructure.Configurations
                 .HasForeignKey(r => r.ExerciseId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Result>()
+                .HasOne(r => r.Lesson)
+                .WithMany(l => l.Results)
+                .HasForeignKey(r => r.LessonId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<PronunciationDetail>()
                 .HasOne(pd => pd.Result)
                 .WithMany(r => r.PronunciationDetails)
