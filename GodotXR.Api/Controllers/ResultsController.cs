@@ -14,20 +14,20 @@ namespace GodotXR.Api.Controllers
     [Authorize]
     public class ResultsController : ControllerBase
     {
-        private readonly IResultService _service;
-        private readonly IUnitOfWork _uow;
+        private readonly IResultService _resultService;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public ResultsController(IResultService service, IUnitOfWork uow)
+        public ResultsController(IResultService resultService, IUnitOfWork unitOfWork)
         {
-            _service = service;
-            _uow = uow;
+            _resultService = resultService;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpPost("submit")]
-        [Authorize(Roles = "Child")]
+        [Authorize(Roles = "Parent,Child")]
         public async Task<IActionResult> Submit([FromBody] SubmitResultRequest request)
         {
-            var (succeeded, notFound, errors, data) = await _service.SubmitAsync(request);
+            var (succeeded, notFound, errors, data) = await _resultService.SubmitAsync(request);
 
             if (notFound)
                 return NotFound(new ApiResponse<ResultResponse>
@@ -58,7 +58,7 @@ namespace GodotXR.Api.Controllers
         {
             var currentUserId = User.GetUserId();
 
-            var resultResponse = await _service.GetByIdAsync(id);
+            var resultResponse = await _resultService.GetByIdAsync(id);
             if (!resultResponse.Success)
                 return NotFound(resultResponse);
 
@@ -66,14 +66,14 @@ namespace GodotXR.Api.Controllers
 
             if (User.IsInRole("Parent"))
             {
-                var child = await _uow.ChildProfileRepository.GetByIdAsync(data.ChildId);
+                var child = await _unitOfWork.ChildProfileRepository.GetByIdAsync(data.ChildId);
                 if (child == null || child.UserId != currentUserId)
                     return Forbid();
             }
 
             if (User.IsInRole("Teacher"))
             {
-                var hasAccess = await _uow.EnrollmentRepository
+                var hasAccess = await _unitOfWork.EnrollmentRepository
                     .HasTeacherAccessToChildAsync(currentUserId, data.ChildId);
                 if (!hasAccess)
                     return Forbid();
@@ -90,20 +90,20 @@ namespace GodotXR.Api.Controllers
 
             if (User.IsInRole("Parent"))
             {
-                var child = await _uow.ChildProfileRepository.GetByIdAsync(childId);
+                var child = await _unitOfWork.ChildProfileRepository.GetByIdAsync(childId);
                 if (child == null || child.UserId != currentUserId)
                     return Forbid();
             }
 
             if (User.IsInRole("Teacher"))
             {
-                var hasAccess = await _uow.EnrollmentRepository
+                var hasAccess = await _unitOfWork.EnrollmentRepository
                     .HasTeacherAccessToChildAsync(currentUserId, childId);
                 if (!hasAccess)
                     return Forbid();
             }
 
-            var result = await _service.GetByChildIdAsync(childId);
+            var result = await _resultService.GetByChildIdAsync(childId);
             if (!result.Success)
                 return NotFound(result);
             return Ok(result);
@@ -117,12 +117,12 @@ namespace GodotXR.Api.Controllers
 
             if (User.IsInRole("Teacher"))
             {
-                var exercise = await _uow.ExerciseRepository.GetByIdAsync(exerciseId);
+                var exercise = await _unitOfWork.ExerciseRepository.GetByIdAsync(exerciseId);
                 if (exercise == null || exercise.TeacherId != currentUserId)
                     return Forbid();
             }
 
-            var result = await _service.GetByExerciseIdAsync(exerciseId);
+            var result = await _resultService.GetByExerciseIdAsync(exerciseId);
             if (!result.Success)
                 return NotFound(result);
             return Ok(result);

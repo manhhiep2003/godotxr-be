@@ -6,7 +6,11 @@ namespace GodotXR.Domain.Entities
     {
         public int ChildId { get; set; }
 
-        public int ExerciseId { get; set; }
+        public int? ExerciseId { get; set; } 
+
+        public int? LessonId { get; set; }
+
+        public ResultType ResultType { get; set; }
 
         public int AttemptNumber { get; set; }
 
@@ -27,17 +31,23 @@ namespace GodotXR.Domain.Entities
         public string? InteractionLog { get; set; }
 
         public string? FeedbackText { get; set; }
+
         public string SessionId { get; set; } = null!;  
-        public bool IsFinalized { get; set; } = false;  
+
+        public bool IsFinalized { get; set; } = false;
 
         // Navigation Properties
-        [ForeignKey("ChildId")]
+        [ForeignKey(nameof(ChildId))]
         public ChildProfile Child { get; set; } = null!;
 
-        [ForeignKey("ExerciseId")]
-        public Exercise Exercise { get; set; } = null!;
+        [ForeignKey(nameof(ExerciseId))]
+        public Exercise? Exercise { get; set; }
+
+        [ForeignKey(nameof(LessonId))]
+        public Lesson? Lesson { get; set; }
 
         public ICollection<PronunciationDetail> PronunciationDetails { get; set; } = new List<PronunciationDetail>();
+
         public ICollection<EventLog> EventLogs { get; set; } = new List<EventLog>();
     }
 }

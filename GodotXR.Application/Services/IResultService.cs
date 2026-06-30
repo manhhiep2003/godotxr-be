@@ -7,8 +7,11 @@ namespace GodotXR.Application.Services
     public interface IResultService
     {
         Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors, ResultResponse? Data)> SubmitAsync(SubmitResultRequest request);
+
         Task<ApiResponse<ResultResponse>> GetByIdAsync(int id);
+
         Task<ApiResponse<IEnumerable<ResultResponse>>> GetByChildIdAsync(int childId);
+
         Task<ApiResponse<IEnumerable<ResultResponse>>> GetByExerciseIdAsync(int exerciseId);
     }
 }
