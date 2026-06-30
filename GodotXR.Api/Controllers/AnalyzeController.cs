@@ -22,6 +22,7 @@ namespace GodotXR.Api.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin,Teacher,Parent")]
         [ProducesResponseType(typeof(ApiResponse<PagedResponse<AnalyzeResponse>>), StatusCodes.Status200OK)]
         public async Task<ActionResult> Get([FromQuery] PaginationQuery query)
         {
@@ -38,6 +39,7 @@ namespace GodotXR.Api.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [Authorize(Roles = "Admin,Teacher,Parent")]
         [ProducesResponseType(typeof(ApiResponse<AnalyzeResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<AnalyzeResponse>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -16,6 +16,7 @@ namespace GodotXR.Api.Controllers
         public ExerciseTypesController(IExerciseTypeService service) => _service = service;
 
         [HttpGet]
+        [Authorize(Roles = "Admin,Teacher,Parent")]
         public async Task<IActionResult> Get([FromQuery] PaginationQuery query, [FromQuery] bool? isActive = null)
         {
             var data = await _service.GetListAsync(query.PageNumber, query.PageSize, isActive);
@@ -23,6 +24,7 @@ namespace GodotXR.Api.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [Authorize(Roles = "Admin,Teacher,Parent")] 
         public async Task<IActionResult> GetById(int id)
         {
             if (id <= 0) return BadRequest(new ApiResponse<ExerciseTypeResponse> { Success = false, Message = "Invalid id." });

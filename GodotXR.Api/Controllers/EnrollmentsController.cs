@@ -28,7 +28,7 @@ namespace GodotXR.Api.Controllers
             User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Teacher")]
+        [Authorize(Roles = "Admin,Teacher,Parent")]
         public async Task<ActionResult> Get(
             [FromQuery] PaginationQuery query,
             [FromQuery] string? status = null,
@@ -41,7 +41,7 @@ namespace GodotXR.Api.Controllers
         }
 
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "Admin,Teacher")]
+        [Authorize(Roles = "Admin,Teacher,Parent")]
         public async Task<ActionResult> GetById(int id)
         {
             if (id <= 0)

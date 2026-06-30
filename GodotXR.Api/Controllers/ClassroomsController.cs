@@ -21,6 +21,7 @@ namespace GodotXR.Api.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin,Teacher,Parent")]
         [ProducesResponseType(typeof(ApiResponse<PagedResponse<ClassroomResponse>>), StatusCodes.Status200OK)]
         public async Task<IActionResult> Get([FromQuery] PaginationQuery query)
         {
@@ -35,6 +36,7 @@ namespace GodotXR.Api.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [Authorize(Roles = "Admin,Teacher,Parent")]
         [ProducesResponseType(typeof(ApiResponse<ClassroomResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(int id)
