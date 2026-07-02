@@ -78,7 +78,7 @@ namespace GodotXR.Application.Services
         }
 
         public async Task<(bool Succeeded, bool NotFound, IEnumerable<string> Errors, ChildProfileResponse? Data)>
-            UpdateChildProfileAsync(int id, UpdateChildProfileRequest request)
+     UpdateChildProfileAsync(int id, UpdateChildProfileRequest request)
         {
             var errors = new List<string>();
 
@@ -108,6 +108,9 @@ namespace GodotXR.Application.Services
 
                 childProfile.UserId = request.UserId.Value;
             }
+
+            if (!string.IsNullOrWhiteSpace(request.Avatar))
+                childProfile.Avatar = request.Avatar;
 
             if (!string.IsNullOrWhiteSpace(request.FullName))
                 childProfile.FullName = request.FullName;

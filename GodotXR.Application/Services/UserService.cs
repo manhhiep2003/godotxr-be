@@ -19,7 +19,7 @@ namespace GodotXR.Application.Services
             IUnitOfWork unitOfWork,
             IMailService mailService,
             IConfiguration configuration,
-            IMapper mapper) 
+            IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _mailService = mailService;
@@ -76,6 +76,7 @@ namespace GodotXR.Application.Services
 
             var user = new User
             {
+                Avatar = request.Avatar,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                 FullName = request.FullName,
                 Email = request.Email,
@@ -128,7 +129,7 @@ namespace GodotXR.Application.Services
                 Gender = request.Gender,
                 Specialty = request.Specialty,
                 RoleId = role!.Id,
-                IsActive = false, 
+                IsActive = false,
                 IsEmailVerified = false,
                 MustChangePassword = true,
                 VerifyToken = verifyToken,
@@ -205,6 +206,9 @@ namespace GodotXR.Application.Services
             if (errors.Any())
                 return (false, false, errors, null);
 
+            if (!string.IsNullOrWhiteSpace(request.Avatar))
+                user.Avatar = request.Avatar;
+
             if (!string.IsNullOrWhiteSpace(request.FullName))
                 user.FullName = request.FullName;
 
@@ -276,6 +280,7 @@ namespace GodotXR.Application.Services
 
         private static UserResponse MapToResponse(User user) => new()
         {
+            Avatar = user.Avatar,
             Id = user.Id,
             FullName = user.FullName,
             Email = user.Email,
